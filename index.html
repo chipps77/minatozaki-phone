@@ -1782,7 +1782,7 @@ if(!STANDALONE)(function(){
     const d=el('button',{className:'mini dg',textContent:'清除',type:'button'});d.style.marginLeft='6px';
     b.onclick=()=>f.click();
     const u=el('button',{className:'mini',textContent:'貼網址',type:'button'});u.style.marginLeft='6px';u.onclick=()=>{const v=prompt('貼上圖片網址（例如 GitHub 上的圖片網址，或相對路徑 img/a.webp）',typeof o[k]==='string'&&!o[k].startsWith('data:')?o[k]:'');if(v&&v.trim()){o[k]=v.trim();b.textContent='更換';paint();touch()}};
-    f.onchange=async()=>{if(!f.files[0])return;const fl=f.files[0];o[k]=(fl.type==='image/gif'&&fl.size<4e6)?await new Promise(r=>{const fr=new FileReader;fr.onload=()=>r(fr.result);fr.readAsDataURL(fl)}):await shrink(fl,max||900,.82);b.textContent='更換';paint();touch()};
+    f.onchange=async()=>{if(!f.files[0])return;const fl=f.files[0];if(fl.type==='image/gif'&&fl.size>=25e6)alert('這個 GIF 超過 25MB，會被轉成靜止圖片。請先用壓縮工具把 GIF 縮小（建議 10MB 以下）再上傳。');o[k]=(fl.type==='image/gif'&&fl.size<25e6)?await new Promise(r=>{const fr=new FileReader;fr.onload=()=>r(fr.result);fr.readAsDataURL(fl)}):await shrink(fl,max||900,.82);b.textContent='更換';paint();touch()};
     d.onclick=()=>{o[k]=null;b.textContent='上傳'+label;paint();touch()};
     w.append(th,b,u,d,f);return w;
   }
