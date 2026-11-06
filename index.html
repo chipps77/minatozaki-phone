@@ -1517,7 +1517,7 @@ HOOK.spot=renderSpot;MODS.push(()=>{renderSpot()});
   const img=$('#cmImg'),rec=$('#cmRec'),top=$('#cmTop'),tmr=$('#cmTimer'),tt=$('#cmTime');
   function stop(){rec.classList.remove('rec');tmr.hidden=true;top.style.visibility='visible';clearInterval(tm);tm=null}
   let front=false;
-  function paint(){const C=P.camera||{};const v=front?(C.front||C.back||C.view):(C.back||C.view);img.src=v||'';img.style.display=v?'':'none';a.querySelector('.cm-vf').style.background=v?'#000':'linear-gradient(160deg,#2b3a4a,#0f1720 55%,#3a2a2a)';
+  function paint(){const C=P.camera||{};const v=front?(C.front||C.back||C.view):(C.back||C.view||C.front);img.src=v||'';img.style.display=v?'':'none';a.querySelector('.cm-vf').style.background=v?'#000':'linear-gradient(160deg,#2b3a4a,#0f1720 55%,#3a2a2a)';
     const th=$('#cmThumb');if(th)th.style.backgroundImage=(C.thumb||C.back||C.view)?`url(${C.thumb||C.back||C.view})`:''}
   $$('#cmZoom button').forEach(b=>b.onclick=()=>{$$('#cmZoom button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const z=parseFloat(b.dataset.z||'1');img.style.transform='scale('+(z>1?(z===2?1.6:z===4?2.4:3.2):1)+')'});
   rec.onclick=()=>{
