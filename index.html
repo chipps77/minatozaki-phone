@@ -304,6 +304,7 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 @keyframes mlp{0%{box-shadow:0 0 0 0 #0a84ffaa}70%{box-shadow:0 0 0 11px #0a84ff00}100%{box-shadow:0 0 0 0 #0a84ff00}}
 .ml-det .bt{align-items:flex-start}.ml-det .bt span{height:36px;width:52px;display:flex;align-items:center;justify-content:center}
 .ml-comp textarea{color:#000;-webkit-text-fill-color:#000}.ml-comp .f{color:#000}
+.ml-sent{margin-top:22px;padding-top:14px;border-top:1px solid #e5e5ea;animation:mlin .4s}.ml-sh{display:flex;align-items:center;gap:6px;color:#0a84ff;font:600 15px var(--font)}.ml-sh b{color:#000}.ml-sh span{margin-left:auto;font:400 13px var(--font);color:#8e8e93}.ml-sent .s{font-size:13px;color:#8e8e93;margin:4px 0 8px}@keyframes mlin{from{opacity:0;transform:translateY(8px)}}
 /* ---- keyboard / kakao typing ---- */
 #rSend.pulse{animation:snd 1s ease-in-out infinite}@keyframes snd{50%{transform:scale(1.15)}}
 .k-room.kbon .r-input{bottom:333px}
@@ -1246,13 +1247,13 @@ function renderMail(){
 }
 function renderMailDetail(){
   const m=P.mail.mails[mlI];if(!m)return;
-  $('#mlDBody').innerHTML=`<div class="ml-dh"><span class="ml-av">${esc(initial(m.from))}</span><div><b>${esc(m.from)}</b><div class="s">收件人：${esc(P.meta.owner)}</div></div><time>${esc(m.time||'')}</time></div><h2>${esc(m.subject)}</h2><div class="ml-tx">${esc(m.body).replace(/\n/g,'<br>')}</div>`;
+  $('#mlDBody').innerHTML=`<div class="ml-dh"><span class="ml-av">${esc(initial(m.from))}</span><div><b>${esc(m.from)}</b><div class="s">收件人：${esc(P.meta.owner)}</div></div><time>${esc(m.time||'')}</time></div><h2>${esc(m.subject)}</h2><div class="ml-tx">${esc(m.body).replace(/\n/g,'<br>')}</div>`+(mlReplied.has(m)?`<div class="ml-sent"><div class="ml-sh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 016 6v3"/></svg><b>${esc(P.meta.owner)}</b><span>已回覆 · ${esc(mlReplied.get(m).time)}</span></div><div class="s">收件人：${esc(m.from)}</div><div class="ml-tx">${esc(mlReplied.get(m).text).replace(/\n/g,'<br>')}</div></div>`:'');
   $('#mlReply').classList.toggle('off',!mlCanReply(m));
 }
 $('#mlHome').onclick=()=>closeApp();$('#mlQ').oninput=renderMail;
 $('#mlNew').onclick=()=>{mlTok++;mlCur=null;$('#mlTxt').readOnly=false;$('#mlTo').textContent='';$('#mlSubj').textContent='新郵件';$('#mlTxt').value='';$('#mlComp').hidden=false;$('#mlTxt').focus()};
 $('#mlBack').onclick=()=>$('#mlDetail').classList.remove('open');
-const mlReplied=new Set();let mlTok=0,mlCur=null,mlTypeDone=true;
+const mlReplied=new Map();let mlTok=0,mlCur=null,mlTypeDone=true;
 function mlCanReply(m){return !!(m&&(m.reply||'').trim())&&!mlReplied.has(m)}
 function mlFinishType(){mlTok++;if(mlCur){const ta=$('#mlTxt');ta.value=mlCur.reply.trim()+'\n\n— 原始郵件 —\n'+mlCur.body;ta.readOnly=false;ta.scrollTop=0}mlTypeDone=true;$('#mlSend').classList.add('ready')}
 $('#mlReply').onclick=()=>{const m=P.mail.mails[mlI];if(!mlCanReply(m))return;
@@ -1267,7 +1268,7 @@ $('#mlSend').onclick=()=>{
   const subj=$('#mlSubj').textContent,body=cur?cur.reply.trim():$('#mlTxt').value;
   mlTok++;mlCur=null;mlTypeDone=true;$('#mlTxt').readOnly=false;$('#mlSend').classList.remove('ready');
   fireEv('mailsend',{subject:subj,text:body});$('#mlComp').hidden=true;
-  if(cur){mlReplied.add(cur);renderMailDetail()}
+  if(cur){const d=new Date();mlReplied.set(cur,{text:body,time:'剛剛'});renderMailDetail();setTimeout(()=>{const b=$('#mlDBody');b.scrollTo({top:b.scrollHeight,behavior:'smooth'})},50)}
   const t=$('#mlToast');t.hidden=false;setTimeout(()=>{t.hidden=true},1400)};
 HOOK.mail=()=>{$('#mlDetail').classList.remove('open');renderMail()};MODS.push(()=>{if(curApp==='mail')renderMail()});
 
