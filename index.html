@@ -437,6 +437,11 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 .arr-bn .tx b{font-weight:600}
 .arr-bn .tx span{color:#333;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .arr-bn time{font-size:12px;color:#777;align-self:flex-start;margin-top:2px}
+
+/* 對照截圖：天數列小一點 */
+.bb3-top .bb3-s{padding:4px 0 9px;font-size:14px;gap:4px;border-bottom:0;box-shadow:0 2px 6px #00000012}
+.bb3-top .bb3-s svg{width:16px;height:16px}.bb3-top .bb3-s .bbl{font-size:15px}.bb3-top .bb3-s b{font-weight:600;font-size:14px}
+.cm-fv{transition:transform .35s ease,opacity .16s}
 </style>
 </head><body>
 <div id="wrap">
@@ -577,15 +582,15 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 <section class="app photos" data-app="photos" data-ui="light" hidden>
 <div class="pl-scroll" id="phScroll"><div class="pl-grid" id="phGrid"></div></div>
 <div class="pl-top"><div class="pl-row">
-<div class="pl-title"><h1>資料庫</h1><p><span id="phCount">0</span>個項目</p></div>
+<div class="pl-title"><h1>圖庫</h1><p id="phSub"></p></div>
 <div class="pl-btns">
 <span class="pl-circle"><svg width="30" height="20" viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 3h26M6 10h18M11 17h8"/></svg></span>
 <span class="pl-pill">選取</span>
 </div></div></div>
 <nav class="pl-tabs">
 <div class="pl-cap">
-<button type="button" class="pl-tab on" id="phLib"><svg width="31" height="28" viewBox="0 0 31 28" fill="none"><rect x="1" y="1" width="22" height="19" rx="4.5" fill="currentColor" opacity=".55"/><rect x="6" y="6" width="24" height="21" rx="5" fill="currentColor"/><path d="m8 25 7-8 5 5 4-3 6 6Z" fill="#fff" opacity=".95"/><circle cx="23" cy="12" r="2.6" fill="#fff"/></svg><span>資料庫</span></button>
-<span class="pl-tab"><svg width="30" height="28" viewBox="0 0 30 28" fill="currentColor"><rect x="6" y="0" width="18" height="3" rx="1.5" opacity=".4"/><rect x="3" y="5" width="24" height="3.2" rx="1.6" opacity=".7"/><rect x="0" y="10" width="30" height="18" rx="5"/></svg><span>相簿集</span></span>
+<button type="button" class="pl-tab on" id="phLib"><svg width="31" height="28" viewBox="0 0 31 28" fill="none"><rect x="1" y="1" width="22" height="19" rx="4.5" fill="currentColor" opacity=".55"/><rect x="6" y="6" width="24" height="21" rx="5" fill="currentColor"/><path d="m8 25 7-8 5 5 4-3 6 6Z" fill="#fff" opacity=".95"/><circle cx="23" cy="12" r="2.6" fill="#fff"/></svg><span>圖庫</span></button>
+<span class="pl-tab"><svg width="30" height="28" viewBox="0 0 30 28" fill="currentColor"><rect x="6" y="0" width="18" height="3" rx="1.5" opacity=".4"/><rect x="3" y="5" width="24" height="3.2" rx="1.6" opacity=".7"/><rect x="0" y="10" width="30" height="18" rx="5"/></svg><span>選集</span></span>
 </div>
 <span class="pl-search"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.8"/><path d="m20 20-4.7-4.7"/></svg></span>
 </nav>
@@ -611,10 +616,8 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 <div class="ios-head"><div class="bar pbar"><span class="pill ed">編輯</span><div class="seg" id="rSeg"><button data-rf="all" class="on">全部</button><button data-rf="missed">未接來電</button></div><span class="pill circ"><svg width="22" height="16" viewBox="0 0 22 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M1 2h20M4 8h14M7.5 14h7"/></svg></span></div><h1>最近通話</h1><div class="ios-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>搜尋<svg class="mic" width="14" height="18" viewBox="0 0 14 20" fill="currentColor"><rect x="3.5" y="0" width="7" height="12.5" rx="3.5"/><path d="M1 9.5a6 6 0 0 0 12 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 15.5V19" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div></div>
 <div class="c-list" id="rList"></div>
 </div>
-<div class="p-pane" data-ppane="fav" hidden><div class="ios-head"><h1>個人收藏</h1></div><div class="c-list" id="fList"></div></div>
 <div class="p-pane" data-ppane="vm" hidden><div class="ios-head"><h1>語音信箱</h1></div><div class="c-list" id="vList"></div></div>
 <nav class="p-tabs">
-<button data-ptab="fav"><svg width="27" height="27" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8Z"/></svg>個人收藏</button>
 <button data-ptab="recents" class="on"><svg width="27" height="27" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 6.5V12h-4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>最近通話</button>
 <button data-ptab="contacts"><svg width="27" height="27" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><circle cx="12" cy="9.5" r="3.4" fill="#fff"/><path d="M5.6 18.6c1.2-2.5 3.6-3.9 6.4-3.9s5.2 1.4 6.4 3.9" fill="#fff"/></svg>聯絡人</button>
 <button data-ptab="keypad"><svg width="27" height="27" viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="4" r="2.1"/><circle cx="12" cy="4" r="2.1"/><circle cx="18.5" cy="4" r="2.1"/><circle cx="5.5" cy="10.2" r="2.1"/><circle cx="12" cy="10.2" r="2.1"/><circle cx="18.5" cy="10.2" r="2.1"/><circle cx="5.5" cy="16.4" r="2.1"/><circle cx="12" cy="16.4" r="2.1"/><circle cx="18.5" cy="16.4" r="2.1"/><circle cx="12" cy="22" r="1.8"/></svg>鍵盤</button>
@@ -811,7 +814,7 @@ const stage=$('.stage'),fit=$('#fit'),dev=$('#device'),below=$('#below');
 function scaleIt(){
   const w=stage.clientWidth-32,h=window.innerHeight-24-below.offsetHeight-14;
   const r=Math.max(.3,Math.min(1,w/417,h/876));
-  dev.style.transform=`scale(${r})`;fit.style.width=417*r+'px';fit.style.height=876*r+'px';
+  window.__scale=r;dev.style.transform=`scale(${r})`;fit.style.width=417*r+'px';fit.style.height=876*r+'px';
 }
 addEventListener('resize',scaleIt);
 if(window.ResizeObserver)new ResizeObserver(scaleIt).observe(stage);
@@ -920,7 +923,7 @@ const DOCK=[
  {id:'phone',n:'電話',ic:'전화',open:1},{id:'msgs',n:'訊息',ic:'메시지',open:1},{id:'kakao',n:'KakaoTalk',ic:'KakaoTalk',open:1,badge:1},{id:'safari',n:'Safari',svg:'safari',open:1}
 ];
 function iconHtml(a){
-  const im=a.cal?`<span class="cal"><b id="calW"></b><i id="calD"></i></span>`:`<img src="${a.svg?ICONS[a.svg]:(ICONS[a.ic]||'')}" alt="">`;
+  const ov=(P.meta.icons||{})[a.id];const im=ov?`<img src="${ov}" alt="">`:a.cal?`<span class="cal"><b id="calW"></b><i id="calD"></i></span>`:`<img src="${a.svg?ICONS[a.svg]:(ICONS[a.ic]||'')}" alt="">`;
   return`<button class="icon${a.open?'':' dead'}"${a.open?` data-open="${a.id}"`:''}><span class="img">${im}${a.badge?'<span class="badge" id="kBadge" hidden>0</span>':''}</span><span class="lbl">${a.n}</span></button>`;
 }
 function renderHome(){
@@ -988,7 +991,7 @@ function renderKakao(){
   }else if(kTab==='friends'){
     $('#kTitle').textContent='好友';
     const fr=rooms.map((r,i)=>[r,i]).filter(([r])=>!r.group);
-    L.innerHTML=`<div class="k-me">${Y()}<b>${esc(P.meta.owner)}</b></div><div class="k-sect">好友 ${fr.length}</div>`+fr.map(([r,i])=>`<button class="k-item" data-room="${i}">${Y(r.avatar?'ph':'',r.avatar)}<span class="tx"><b>${esc(r.name)}</b></span></button>`).join('');
+    L.innerHTML=`<div class="k-me">${Y()}<b>${esc((P.kakao.nick||'').trim()||'我')}</b></div><div class="k-sect">好友 ${fr.length}</div>`+fr.map(([r,i])=>`<button class="k-item" data-room="${i}">${Y(r.avatar?'ph':'',r.avatar)}<span class="tx"><b>${esc(r.name)}</b></span></button>`).join('');
   }else{
     $('#kTitle').textContent={open:'公開聊天',shop:'購物',more:'更多'}[kTab];L.innerHTML='<div class="k-empty">沒有可顯示的項目</div>';
   }
@@ -1080,11 +1083,17 @@ $('#ntBack').onclick=()=>$('#ntDoc').classList.remove('open');
 
 /* ---------- Photos ---------- */
 function renderPhotos(){
-  const ph=P.photos,n=Math.max(ph.length,24);
-  $('#phCount').textContent=ph.length.toLocaleString('zh-TW');
-  $('#phGrid').innerHTML=Array.from({length:n},(_,i)=>ph[i]?`<span data-i="${i}" style="background-image:url(${ph[i]})"></span>`:`<span style="background:hsl(${i*53%360} 7% ${66+i*17%24}%)"></span>`).join('');
-  $('#phGrid').onclick=e=>{const s=e.target.closest('[data-i]');if(s){$('#phViewImg').src=ph[+s.dataset.i];$('#phView').hidden=false}};
+  const ph=P.photos,d=new Date(),y=new Date(d.getTime()-864e5);
+  const sub=$('#phSub');if(sub)sub.textContent=y.getFullYear()+'年'+(y.getMonth()+1)+'月'+y.getDate()+'日至'+(y.getMonth()!==d.getMonth()?(d.getMonth()+1)+'月':'')+d.getDate()+'日';
+  $('#phGrid').innerHTML=ph.map((u,i)=>`<span data-i="${i}" style="background-image:url(${u})"></span>`).join('');
+  $('#phGrid').onclick=e=>{if(window.__phDragged)return;const s=e.target.closest('[data-i]');if(s){$('#phViewImg').src=ph[+s.dataset.i];$('#phView').hidden=false}};
 }
+(function(){ /* 滑鼠拖曳也能捲動圖庫 */
+  const s=$('#phScroll');let y0=0,t0=0,on=false;
+  s.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;on=true;y0=e.clientY;t0=s.scrollTop;window.__phDragged=false});
+  addEventListener('pointermove',e=>{if(!on)return;const dy=e.clientY-y0;if(Math.abs(dy)>4){window.__phDragged=true;s.scrollTop=t0-dy/(window.__scale||1)}});
+  addEventListener('pointerup',()=>{on=false;setTimeout(()=>{window.__phDragged=false},0)});
+})();
 $('#phClose').onclick=()=>{$('#phView').hidden=true};
 $('#phViewImg').onclick=()=>{$('#phView').hidden=true};
 $('#phLib').onclick=()=>{const s=$('#phScroll');s.scrollTo({top:s.scrollHeight,behavior:'smooth'})};
@@ -1106,7 +1115,7 @@ function contactRows(list){
 function renderContacts(){
   const cs=[...(PH().contacts||[])].sort((a,b)=>a.name.localeCompare(b.name,'zh-Hant'));
   $('#cList').innerHTML=contactRows(cs)||'<div class="k-empty">沒有聯絡人</div>';
-  $('#fList').innerHTML=contactRows(cs.filter(c=>c.fav))||'<div class="k-empty">沒有個人收藏</div>';
+  /* 個人收藏分頁已移除 */
   $$('#cList .r-item,#fList .r-item').forEach(r=>r.onclick=()=>startCall(r.dataset.n));
   const v=PH().voicemails||[];
   $('#vList').innerHTML=v.map((m,i)=>`<div class="vm-item" data-v="${i}"><div class="vm-h"><b>${esc(m.name)}</b><time>${esc(m.t)}</time></div><div class="vm-s">語音信箱${m.dur?' · '+esc(m.dur):''}</div><div class="vm-body" hidden><div class="vm-play"><i>▶</i><span class="vm-bar"><u></u></span><span>${esc(m.dur||'0:12')}</span></div><div class="vm-tx">${esc(m.text)}</div></div></div>`).join('')||'<div class="k-empty">沒有語音留言</div>';
@@ -1479,8 +1488,9 @@ HOOK.spot=renderSpot;MODS.push(()=>{renderSpot()});
   const a=$('[data-app="camera"]');let tm=null,sec=0;
   const img=$('#cmImg'),rec=$('#cmRec'),top=$('#cmTop'),tmr=$('#cmTimer'),tt=$('#cmTime');
   function stop(){rec.classList.remove('rec');tmr.hidden=true;top.style.visibility='visible';clearInterval(tm);tm=null}
-  function paint(){const C=P.camera||{};img.src=C.view||'';img.style.display=C.view?'':'none';a.querySelector('.cm-vf').style.background=C.view?'#000':'linear-gradient(160deg,#2b3a4a,#0f1720 55%,#3a2a2a)';
-    const th=$('#cmThumb');if(th)th.style.backgroundImage=(C.thumb||C.view)?`url(${C.thumb||C.view})`:''}
+  let front=false;
+  function paint(){const C=P.camera||{};const v=front?(C.front||C.back||C.view):(C.back||C.view);img.src=v||'';img.style.display=v?'':'none';a.querySelector('.cm-vf').style.background=v?'#000':'linear-gradient(160deg,#2b3a4a,#0f1720 55%,#3a2a2a)';
+    const th=$('#cmThumb');if(th)th.style.backgroundImage=(C.thumb||C.back||C.view)?`url(${C.thumb||C.back||C.view})`:''}
   $$('#cmZoom button').forEach(b=>b.onclick=()=>{$$('#cmZoom button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const z=parseFloat(b.dataset.z||'1');img.style.transform='scale('+(z>1?(z===2?1.6:z===4?2.4:3.2):1)+')'});
   rec.onclick=()=>{
     {const f=document.createElement('div');f.className='cm-flash';$('#cmVf').append(f);setTimeout(()=>f.remove(),260);return}
@@ -1489,7 +1499,9 @@ HOOK.spot=renderSpot;MODS.push(()=>{renderSpot()});
     tm=setInterval(()=>{sec++;tt.textContent=pad(Math.floor(sec/60))+':'+pad(sec%60)},1000)};
 
   new MutationObserver(()=>{if(a.hidden)stop()}).observe(a,{attributes:true,attributeFilter:['hidden']});
-  HOOK.camera=paint;MODS.push(paint);
+  const fl=a.querySelector('.cm-flip');if(fl)fl.onclick=()=>{front=!front;img.style.opacity='0';img.style.transform='scale(1)';$$('#cmZoom button').forEach(x=>x.classList.toggle('on',x.dataset.z==='1'));setTimeout(()=>{paint();img.style.opacity=''},160)};
+  a.addEventListener('transitionend',()=>{});
+  HOOK.camera=()=>{front=false;paint()};MODS.push(paint);
 })();
 /* ================= Calendar（沿用原程式的月曆） ================= */
 function renderCal(){
@@ -1602,7 +1614,7 @@ HOOK.settings=()=>{stDet=false;renderSettings()};MODS.push(()=>{if(curApp==='set
               do:'msg|notify|call|xreply|mail', ...效果欄位}] */
 let arrBnT=null;const evDone=new Set();
 const EVS=()=>P.events||(P.events=[]);
-function arrIconSrc(app){const a=HOME.concat(DOCK).find(x=>x.id===app);return a?(a.svg?ICONS[a.svg]:(ICONS[a.ic]||'')):''}
+function arrIconSrc(app){const ov=(P.meta.icons||{})[app];if(ov)return ov;const a=HOME.concat(DOCK).find(x=>x.id===app);return a?(a.svg?ICONS[a.svg]:(ICONS[a.ic]||'')):''}
 function arrBanner(app,title,text,onTap){
   let b=$('#arrBn');if(!b){b=document.createElement('div');b.id='arrBn';b.className='arr-bn';$('#screen').append(b)}
   b.innerHTML=`<img src="${arrIconSrc(app)}" alt=""><span class="tx"><b>${esc(title)}</b><span>${esc(text||'')}</span></span><time>現在</time>`;
@@ -1765,11 +1777,15 @@ if(!STANDALONE)(function(){
     p.append(image('桌布／鎖屏圖',P.meta,'wallpaper',1000));
     p.append(el('h3',{style:'margin:16px 0 4px;font-size:14px'},'主畫面要顯示的 App（取消勾選＝隱藏，讓不同角色的手機有不同 App）'));
     APPLIST.forEach(([id,n])=>{const o={get v(){return !hiddenSet().has(id)},set v(x){const s=hiddenSet();x?s.delete(id):s.add(id);P.meta.hidden=[...s]}};p.append(check(n,o,'v'))});
+    p.append(el('h3',{style:'margin:16px 0 4px;font-size:14px'},'自訂 App 圖示（選填；不上傳＝用預設圖示）'));
+    P.meta.icons=P.meta.icons||{};
+    [['bubble','bubble'],['x','X'],['ig','Instagram'],['mail','郵件'],['spot','Spotify'],['kakao','KakaoTalk'],['safari','Safari'],['phone','電話'],['msgs','訊息'],['camera','相機'],['photos','照片'],['notes','備忘錄'],['clock','時鐘'],['voice','語音備忘錄'],['settings','設定']].forEach(([id,n])=>p.append(image(n+' 圖示',P.meta.icons,id,160)));
     p.append(el('div',{className:'note'},'鎖屏畫面的通知，來自「KakaoTalk」分頁裡「未讀數」大於 0 的聊天室。玩家點通知，解鎖後會直接進到那個聊天室。'));
   }
   /* tab: kakao */
   function tKakao(p){
     P.kakao.style=P.kakao.style||{};const KSo=P.kakao.style;
+    p.append(text('KakaoTalk 顯示的我的名字（好友頁最上面；不要用本名時填這裡）',P.kakao,'nick',{ph:'例如：我'}));
     p.append(el('h3',{style:'margin:4px 0 6px;font-size:14px'},'聊天室外觀設定（全部聊天室共用）'));
     const colF=(label,k,def)=>{const w=el('label',{className:'f'});w.append(label);const i=el('input',{type:'color',value:KSo[k]||def});i.oninput=()=>{KSo[k]=i.value;touch()};w.append(i);return w};
     const cr=el('div',{className:'r2'});cr.append(colF('背景色','bg','#a4b1c2'),colF('我方氣泡','mine','#dfce45'));const cr2=el('div',{className:'r2'});cr2.append(colF('對方氣泡','theirs','#e5e5e5'),el('span'));
@@ -1858,7 +1874,7 @@ if(!STANDALONE)(function(){
     p.append(text('沒接／拒接時，對方留下的簡訊（同時產生語音留言）',inc,'leave',{area:1}));
     p.append(el('h3',{style:'margin:18px 0 0;font-size:14px'},'通訊錄'));
     listEd(p,Ph.contacts,()=>({name:'新聯絡人',phone:'',fav:false,avatar:null,callLines:[]}),c=>c.name,(c,it)=>{
-      const a=el('div',{className:'r2'});a.append(text('名字',it,'name'),text('電話',it,'phone'));c.append(a,check('加入個人收藏',it,'fav'),image('頭像',it,'avatar',160),
+      const a=el('div',{className:'r2'});a.append(text('名字',it,'name'),text('電話',it,'phone'));c.append(a,image('頭像',it,'avatar',160),
         linesField('玩家打給他時的通話內容（每行一句；留空＝無人接聽）',it,'callLines'))},'＋ 新增聯絡人');
     p.append(el('h3',{style:'margin:18px 0 0;font-size:14px'},'語音信箱'));
     listEd(p,Ph.voicemails,()=>({name:'',t:'昨天',dur:'0:15',text:''}),v=>v.name,(c,it)=>{
@@ -1963,8 +1979,8 @@ if(!STANDALONE)(function(){
     listEd(p,S.tracks,()=>({title:'',artist:'',dur:200,art:null}),t=>t.title,(c,t)=>{const q=el('div',{className:'r2'});q.append(text('歌名',t,'title'),text('歌手',t,'artist'));c.append(q,text('長度（秒）',t,'dur',{type:'number'}),image('封面',t,'art',400))},'＋ 新增歌曲');
   }
   function tCamera(p){
-    P.camera=P.camera||{view:null,thumb:null};
-    p.append(miniH('相機取景畫面：上傳一張圖片（可以是 GIF 動圖）當作取景器看到的畫面；縮圖留空就用同一張。'),image('取景畫面',P.camera,'view',1200),image('左下角縮圖（可空）',P.camera,'thumb',200));
+    P.camera=P.camera||{back:null,front:null,thumb:null};if(P.camera.view&&!P.camera.back)P.camera.back=P.camera.view;
+    p.append(miniH('相機取景畫面：後置、前置鏡頭可以各放一張圖片（可以是 GIF 動圖），玩家按右下角的翻轉鈕就會切換。前置沒放就用後置那張。左下角縮圖留空就用後置那張。'),image('後置鏡頭畫面',P.camera,'back',1200),image('前置鏡頭畫面',P.camera,'front',1200),image('左下角縮圖（可空）',P.camera,'thumb',200));
   }
 
   function tCal(p){
