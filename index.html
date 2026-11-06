@@ -1516,7 +1516,7 @@ HOOK.spot=renderSpot;MODS.push(()=>{renderSpot()});
   const a=$('[data-app="camera"]');let tm=null,sec=0;
   const img=$('#cmImg'),rec=$('#cmRec'),top=$('#cmTop'),tmr=$('#cmTimer'),tt=$('#cmTime');
   function stop(){rec.classList.remove('rec');tmr.hidden=true;top.style.visibility='visible';clearInterval(tm);tm=null}
-  let front=false;
+  let front=true;
   function paint(){const C=P.camera||{};const v=front?(C.front||C.back||C.view):(C.back||C.view||C.front);img.src=v||'';img.style.display=v?'':'none';a.querySelector('.cm-vf').style.background=v?'#000':'linear-gradient(160deg,#2b3a4a,#0f1720 55%,#3a2a2a)';
     const th=$('#cmThumb');if(th)th.style.backgroundImage=(C.thumb||C.back||C.view)?`url(${C.thumb||C.back||C.view})`:''}
   $$('#cmZoom button').forEach(b=>b.onclick=()=>{$$('#cmZoom button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const z=parseFloat(b.dataset.z||'1');img.style.transform='scale('+(z>1?(z===2?1.6:z===4?2.4:3.2):1)+')'});
@@ -1529,7 +1529,7 @@ HOOK.spot=renderSpot;MODS.push(()=>{renderSpot()});
   new MutationObserver(()=>{if(a.hidden)stop()}).observe(a,{attributes:true,attributeFilter:['hidden']});
   const fl=a.querySelector('.cm-flip');if(fl)fl.onclick=()=>{front=!front;img.style.opacity='0';img.style.transform='scale(1)';$$('#cmZoom button').forEach(x=>x.classList.toggle('on',x.dataset.z==='1'));setTimeout(()=>{paint();img.style.opacity=''},160)};
   a.addEventListener('transitionend',()=>{});
-  HOOK.camera=()=>{front=false;paint()};MODS.push(paint);
+  HOOK.camera=()=>{front=true;paint()};MODS.push(paint);
 })();
 /* ================= Calendar（沿用原程式的月曆） ================= */
 function renderCal(){
