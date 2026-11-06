@@ -296,6 +296,7 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 .ml-det .bt span svg,.sf-ic span svg{display:block;margin:0 auto}
 .ml-det .tb .ud{display:inline-flex;gap:2px;vertical-align:middle}.ml-det .tb .ud svg{display:block}
 .cm-modes span{pointer-events:none}
+.cm-modes:after{content:"";position:absolute;right:0;top:0;bottom:0;width:22px;background:linear-gradient(270deg,#1b1b1d,#1b1b1d00);z-index:2;pointer-events:none}
 /* ---- keyboard / kakao typing ---- */
 #rSend.pulse{animation:snd 1s ease-in-out infinite}@keyframes snd{50%{transform:scale(1.15)}}
 .k-room.kbon .r-input{bottom:333px}
@@ -663,7 +664,7 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 </div>
 <div class="cm-bar">
 <span class="cm-thumb" id="cmThumb"></span>
-<div class="cm-modes" id="cmModes"><span style="left:-14px;width:72px">電影</span><span style="left:60px;width:78px">影片</span><span class="on" style="left:138px;width:58px">照片</span></div>
+<div class="cm-modes" id="cmModes"><span style="left:-81px;width:72px">電影</span><span style="left:-9px;width:78px">影片</span><span class="on" style="left:69px;width:58px">照片</span><span style="left:127px;width:66px">人像</span></div>
 <button class="cm-flip" aria-label="翻轉"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#fff" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"><path d="M4.500 12a8.500 8.500 0 0 1 14.600-5.900L21 8"/><path d="M21.300 3.500V8h-4.500"/><path d="M21.500 14a8.500 8.500 0 0 1-14.600 5.900L5 18"/><path d="M4.700 22.500V18h4.500"/></svg></button>
 </div>
 </section>
