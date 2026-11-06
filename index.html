@@ -306,6 +306,7 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 .ml-comp textarea{color:#000;-webkit-text-fill-color:#000}.ml-comp .f{color:#000}
 .ml-sent{margin-top:22px;padding-top:14px;border-top:1px solid #e5e5ea;animation:mlin .4s}.ml-sh{display:flex;align-items:center;gap:6px;color:#0a84ff;font:600 15px var(--font)}.ml-sh b{color:#000}.ml-sh span{margin-left:auto;font:400 13px var(--font);color:#8e8e93}.ml-sent .s{font-size:13px;color:#8e8e93;margin:4px 0 8px}@keyframes mlin{from{opacity:0;transform:translateY(8px)}}
 :where(#screen) :is(input,textarea){color:#111;caret-color:#111;-webkit-text-fill-color:currentColor}
+.sf-hist{background:none!important;border-radius:0!important}.sf-hl{background:#fff;border-radius:12px;overflow:hidden;margin-top:6px}
 /* ---- keyboard / kakao typing ---- */
 #rSend.pulse{animation:snd 1s ease-in-out infinite}@keyframes snd{50%{transform:scale(1.15)}}
 .k-room.kbon .r-input{bottom:333px}
@@ -739,7 +740,7 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 </section>
 <section class="app sf" data-app="safari" data-ui="dark" hidden>
 <div class="pad-top"></div>
-<div class="sf-main" id="sfStart"><h3>個人收藏</h3><div class="sf-fav" id="sfFav"></div><div class="sf-hist" id="sfHist"></div></div>
+<div class="sf-main" id="sfStart"><h3>書籤</h3><div class="sf-fav" id="sfFav"></div><div class="sf-hist" id="sfHist"></div></div>
 <div class="sf-page" id="sfPage" hidden><div id="sfPageBody"></div></div>
 <div class="sf-bar"><div class="sf-form"><span class="sf-aa">AA</span><form id="sfForm" style="flex:1;display:flex"><input id="sfQ" placeholder="搜尋或輸入網站名稱" autocomplete="off"></form></div><span id="sfUrl" hidden></span><div class="sf-ic"><span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></span><span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span><span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8.5 7.5 12 4l3.5 3.5"/><path d="M7.5 10H6.5a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 17.5 10h-1"/></svg></span><span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7C10 5.5 7 5 4.5 5.5v12c2.5-.5 5.5 0 7.5 1.5 2-1.5 5-2 7.5-1.5v-12C17 5 14 5.5 12 7zM12 7v12"/></svg></span><span id="sfHome"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V7a2 2 0 0 1 2-2h8"/></svg></span></div></div>
 </section>
@@ -1282,7 +1283,7 @@ function sfFind(q){q=(q||'').trim().toLowerCase();if(!q)return null;
 function renderSafari(){
   const S=P.safari;$('#sfStart').hidden=sfPage!=null;$('#sfPage').hidden=sfPage==null;
   $('#sfFav').innerHTML=(S.bookmarks||[]).map((b,i)=>`<button class="sf-bm" data-b="${i}"><span style="background:${BMC[i%BMC.length]}">${esc(initial(b.title))}</span>${esc(b.title)}</button>`).join('');
-  $('#sfHist').innerHTML=(S.history||[]).length?`<h3>最近搜尋</h3>`+(S.history).map((q,i)=>`<div class="sf-h" data-h="${i}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>${esc(q)}</div>`).join(''):'';
+  $('#sfHist').innerHTML=(S.history||[]).length?`<h3>最近搜尋</h3><div class="sf-hl">`+(S.history).map((q,i)=>`<div class="sf-h" data-h="${i}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>${esc(q)}</div>`).join('')+'</div>':'';
   $$('#sfFav [data-b]').forEach(b=>b.onclick=()=>{const bm=S.bookmarks[+b.dataset.b];openSf(sfFind(bm.title)||sfFind(bm.url),bm.title)});
   $$('#sfHist [data-h]').forEach(b=>b.onclick=()=>{const q=S.history[+b.dataset.h];$('#sfQ').value=q;openSf(sfFind(q),q)});
   if(sfPage){$('#sfUrl').textContent=sfPage.url||'';$('#sfPageBody').innerHTML=sfPage.none?`<div class="sf-none"><h2>找不到「${esc(sfPage.q)}」的結果</h2><p>請檢查拼字，或試試其他關鍵字。</p></div>`:`<div class="sf-site"><div class="u">${esc(sfPage.url||'')}</div><h1>${esc(sfPage.title)}</h1><div class="b">${esc(sfPage.body).replace(/\n/g,'<br>')}</div></div>`}
