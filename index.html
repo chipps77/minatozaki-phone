@@ -1517,25 +1517,33 @@ $('#island').addEventListener('click',()=>{const I=$('#island');if(I.classList.c
 setInterval(()=>{if(spPlay){const t=spTr()[spI];spT+=1;if(!t||spT>=t.dur)spNext();else if(curApp==='spot'){$('#sCur').textContent=spFmt(spT);$('#sBar').style.width=spT/t.dur*100+'%'}}updIsl()},1000);
 HOOK.spot=renderSpot;MODS.push(()=>{renderSpot()});
 
-/* ================= Camera ================= */
+/* ================= Camera（前後置兩張圖都預先載入，切換不用等） ================= */
 (function(){
   const a=$('[data-app="camera"]');let tm=null,sec=0;
-  const img=$('#cmImg'),rec=$('#cmRec'),top=$('#cmTop'),tmr=$('#cmTimer'),tt=$('#cmTime');
+  const imgB=$('#cmImg'),rec=$('#cmRec'),top=$('#cmTop'),tmr=$('#cmTimer'),tt=$('#cmTime');
+  const imgF=imgB.cloneNode(false);imgF.id='cmImg2';imgB.after(imgF);
+  [imgB,imgF].forEach(x=>{x.decoding='async';x.style.transition='transform .35s ease'});
   function stop(){rec.classList.remove('rec');tmr.hidden=true;top.style.visibility='visible';clearInterval(tm);tm=null}
   let front=true;
-  function paint(){const C=P.camera||{};const v=front?(C.front||C.back||C.view):(C.back||C.view||C.front);img.src=v||'';img.style.display=v?'':'none';a.querySelector('.cm-vf').style.background=v?'#000':'linear-gradient(160deg,#2b3a4a,#0f1720 55%,#3a2a2a)';
+  function setSrc(el,v){if((el.getAttribute('data-s')||'')!==(v||'')){el.setAttribute('data-s',v||'');if(v)el.src=v;else el.removeAttribute('src')}}
+  function show(){imgF.style.visibility=front?'visible':'hidden';imgB.style.visibility=front?'hidden':'visible'}
+  function paint(){const C=P.camera||{};
+    const vb=C.back||C.view||C.front,vf=C.front||C.back||C.view;
+    setSrc(imgB,vb);setSrc(imgF,vf);
+    imgB.style.display=vb?'':'none';imgF.style.display=vf?'':'none';show();
+    a.querySelector('.cm-vf').style.background=(vb||vf)?'#000':'linear-gradient(160deg,#2b3a4a,#0f1720 55%,#3a2a2a)';
     const th=$('#cmThumb');if(th)th.style.backgroundImage=(C.thumb||C.back||C.view)?`url(${C.thumb||C.back||C.view})`:''}
-  $$('#cmZoom button').forEach(b=>b.onclick=()=>{$$('#cmZoom button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const z=parseFloat(b.dataset.z||'1');img.style.transform='scale('+(z>1?(z===2?1.6:z===4?2.4:3.2):1)+')'});
+  const zoom=z=>{const s='scale('+(z>1?(z===2?1.6:z===4?2.4:3.2):1)+')';imgB.style.transform=s;imgF.style.transform=s};
+  $$('#cmZoom button').forEach(b=>b.onclick=()=>{$$('#cmZoom button').forEach(x=>x.classList.remove('on'));b.classList.add('on');zoom(parseFloat(b.dataset.z||'1'))});
   rec.onclick=()=>{
     {const f=document.createElement('div');f.className='cm-flash';$('#cmVf').append(f);setTimeout(()=>f.remove(),260);return}
     if(tm){stop();return}
     rec.classList.add('rec');tmr.hidden=false;top.style.visibility='hidden';sec=0;tt.textContent='00:00';
     tm=setInterval(()=>{sec++;tt.textContent=pad(Math.floor(sec/60))+':'+pad(sec%60)},1000)};
-
   new MutationObserver(()=>{if(a.hidden)stop()}).observe(a,{attributes:true,attributeFilter:['hidden']});
-  const fl=a.querySelector('.cm-flip');if(fl)fl.onclick=()=>{front=!front;img.style.opacity='0';img.style.transform='scale(1)';$$('#cmZoom button').forEach(x=>x.classList.toggle('on',x.dataset.z==='1'));setTimeout(()=>{paint();img.style.opacity=''},160)};
-  a.addEventListener('transitionend',()=>{});
-  HOOK.camera=()=>{front=true;paint()};MODS.push(paint);
+  const fl=a.querySelector('.cm-flip');
+  if(fl)fl.onclick=e=>{e.stopPropagation();front=!front;zoom(1);$$('#cmZoom button').forEach(x=>x.classList.toggle('on',x.dataset.z==='1'));show()};
+  HOOK.camera=()=>{front=true;zoom(1);$$('#cmZoom button').forEach(x=>x.classList.toggle('on',x.dataset.z==='1'));paint()};MODS.push(paint);
 })();
 /* ================= Calendar（沿用原程式的月曆） ================= */
 function renderCal(){
