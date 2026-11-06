@@ -1000,7 +1000,7 @@ function renderKakao(){
     $('#kTitle').textContent='好友';
     const fr=rooms.map((r,i)=>[r,i]).filter(([r])=>!r.group),gr=rooms.map((r,i)=>[r,i]).filter(([r])=>r.group);
     const GAV=r=>r.avatar?Y('ph',r.avatar):`<span class="ava gmos">${'<i>'+SIL+'</i>'.repeat(1)+'<i>'+SIL+'</i><i>'+SIL+'</i><i>'+SIL+'</i>'}</span>`;
-    L.innerHTML=`<div class="k-me">${Y()}<b>${esc((P.kakao.nick||'').trim()||'我')}</b></div><div class="k-sect">好友 ${fr.length}</div>`+fr.map(([r,i])=>`<button class="k-item" data-room="${i}">${Y(r.avatar?'ph':'',r.avatar)}<span class="tx"><b>${esc(r.name)}</b></span></button>`).join('')
+    L.innerHTML=`<div class="k-me">${Y(P.kakao.myAvatar?'ph':'',P.kakao.myAvatar)}<b>${esc((P.kakao.nick||'').trim()||'我')}</b></div><div class="k-sect">好友 ${fr.length}</div>`+fr.map(([r,i])=>`<button class="k-item" data-room="${i}">${Y(r.avatar?'ph':'',r.avatar)}<span class="tx"><b>${esc(r.name)}</b></span></button>`).join('')
       +(gr.length?`<div class="k-sect k-sect2">群組 ${gr.length}</div>`+gr.map(([r,i])=>`<button class="k-item" data-room="${i}">${GAV(r)}<span class="tx"><b><span class="nm">${esc(r.name)}</span><span class="gcnt">${r.members||''}</span></b></span></button>`).join(''):'');
   }else{
     $('#kTitle').textContent={open:'公開聊天',shop:'購物',more:'更多'}[kTab];L.innerHTML='<div class="k-empty">沒有可顯示的項目</div>';
@@ -1796,6 +1796,7 @@ if(!STANDALONE)(function(){
   function tKakao(p){
     P.kakao.style=P.kakao.style||{};const KSo=P.kakao.style;
     p.append(text('KakaoTalk 顯示的我的名字（好友頁最上面；不要用本名時填這裡）',P.kakao,'nick',{ph:'例如：我'}));
+    p.append(image('KakaoTalk 我的頭像（好友頁最上面）',P.kakao,'myAvatar',200));
     p.append(el('h3',{style:'margin:4px 0 6px;font-size:14px'},'聊天室外觀設定（全部聊天室共用）'));
     const colF=(label,k,def)=>{const w=el('label',{className:'f'});w.append(label);const i=el('input',{type:'color',value:KSo[k]||def});i.oninput=()=>{KSo[k]=i.value;touch()};w.append(i);return w};
     const cr=el('div',{className:'r2'});cr.append(colF('背景色','bg','#a4b1c2'),colF('我方氣泡','mine','#dfce45'));const cr2=el('div',{className:'r2'});cr2.append(colF('對方氣泡','theirs','#e5e5e5'),el('span'));
