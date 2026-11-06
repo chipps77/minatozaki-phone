@@ -1909,10 +1909,11 @@ if(!STANDALONE)(function(){
       p.append(el('div',{className:'note warn'},'目前是「預覽模式」：內容只存在這個瀏覽器裡。把整個資料夾放到 GitHub Pages 後，網址加上 <code>#edit</code> 才會自動存回 GitHub。'));
     }
     p.append(el('div',{className:'note'+(k>9000?' warn':'')},`目前資料量約 ${k>1024?(k/1024).toFixed(1)+' MB':k+' KB'}`));
-    p.append(el('div',{className:'note'},'備份／換電腦：複製資料，之後貼回「載入資料」即可還原。'));
+    p.append(el('div',{className:'note'},'備份／換電腦：複製資料，之後貼回「載入資料」即可還原。也可以只貼某一個 App 的資料（例如只有 kakao 那一段），只會取代那一段，其他不動。'));
     const ta=el('textarea',{className:'imp',placeholder:'在這裡貼上之前複製的資料，再按「載入資料」'});
     p.append(addBtn('複製資料（JSON）',async()=>{try{await navigator.clipboard.writeText(JSON.stringify(P))}catch(e){ta.value=JSON.stringify(P);ta.select()}}),ta,
-      addBtn('載入資料',()=>{try{const d=JSON.parse(ta.value);if(!d.meta||!d.kakao)throw 0;P=Object.assign(EMB,d);save();renderAll();draw2()}catch(e){alert('資料格式不對，無法載入')}}));
+      addBtn('載入資料（可只貼一部分）',()=>{try{const d=JSON.parse(ta.value);if(!d||typeof d!=='object'||Array.isArray(d))throw 0;const ks=Object.keys(d).filter(k=>k in EMB);if(!ks.length)throw 0;
+        ks.forEach(k=>{if(k==='meta'&&P.meta&&typeof d.meta==='object')Object.assign(P.meta,d.meta);else P[k]=d[k]});P.meta.editable=true;save();renderAll();draw2();alert('已載入：'+ks.join('、'))}catch(e){alert('資料格式不對，無法載入')}}));
     if(!GH)p.append(addBtn('重設為範例',()=>{if(confirm('會清除目前所有內容，確定嗎？')){try{localStorage.removeItem(KEY)}catch(e){}location.reload()}}));
   }
   function draw2(){
