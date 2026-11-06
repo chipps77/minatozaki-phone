@@ -445,6 +445,11 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 
 /* KakaoTalk 聊天泡泡：上下留白加大 */
 .k-room .bub{padding:10px 12px;line-height:21px}
+
+/* KakaoTalk 好友頁：群組用 2x2 頭像 */
+.ava.gmos{display:grid;grid-template-columns:1fr 1fr;gap:1.5px;background:#fff;padding:0}
+.ava.gmos i{display:grid;place-items:center;background:#c3d3e8;overflow:hidden}.ava.gmos i svg{width:100%;height:100%}
+.k-sect2{border-top:1px solid #f0f0f0;margin-top:8px;padding-top:14px}
 </style>
 </head><body>
 <div id="wrap">
@@ -993,8 +998,10 @@ function renderKakao(){
       return`<button class="k-item" data-room="${i}">${Y(r.avatar?'ph':'',r.avatar)}<span class="tx"><b><span class="nm">${esc(r.name)}</span>${r.group?`<span class="gcnt">${r.members||''}</span>`:''}${r.pinned?PIN:''}</b><span class="pv">${m?esc(m.img?'傳送了一張照片':m.text):'&nbsp;'}</span></span><span class="side"><time>${tm}</time>${r.unread?`<span class="cnt">${r.unread}</span>`:''}</span></button>`}).join('')||'<div class="k-empty">沒有聊天室</div>';
   }else if(kTab==='friends'){
     $('#kTitle').textContent='好友';
-    const fr=rooms.map((r,i)=>[r,i]).filter(([r])=>!r.group);
-    L.innerHTML=`<div class="k-me">${Y()}<b>${esc((P.kakao.nick||'').trim()||'我')}</b></div><div class="k-sect">好友 ${fr.length}</div>`+fr.map(([r,i])=>`<button class="k-item" data-room="${i}">${Y(r.avatar?'ph':'',r.avatar)}<span class="tx"><b>${esc(r.name)}</b></span></button>`).join('');
+    const fr=rooms.map((r,i)=>[r,i]).filter(([r])=>!r.group),gr=rooms.map((r,i)=>[r,i]).filter(([r])=>r.group);
+    const GAV=r=>r.avatar?Y('ph',r.avatar):`<span class="ava gmos">${'<i>'+SIL+'</i>'.repeat(1)+'<i>'+SIL+'</i><i>'+SIL+'</i><i>'+SIL+'</i>'}</span>`;
+    L.innerHTML=`<div class="k-me">${Y()}<b>${esc((P.kakao.nick||'').trim()||'我')}</b></div><div class="k-sect">好友 ${fr.length}</div>`+fr.map(([r,i])=>`<button class="k-item" data-room="${i}">${Y(r.avatar?'ph':'',r.avatar)}<span class="tx"><b>${esc(r.name)}</b></span></button>`).join('')
+      +(gr.length?`<div class="k-sect k-sect2">群組 ${gr.length}</div>`+gr.map(([r,i])=>`<button class="k-item" data-room="${i}">${GAV(r)}<span class="tx"><b><span class="nm">${esc(r.name)}</span><span class="gcnt">${r.members||''}</span></b></span></button>`).join(''):'');
   }else{
     $('#kTitle').textContent={open:'公開聊天',shop:'購物',more:'更多'}[kTab];L.innerHTML='<div class="k-empty">沒有可顯示的項目</div>';
   }
