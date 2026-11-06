@@ -297,6 +297,13 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 .ml-det .tb .ud{display:inline-flex;gap:2px;vertical-align:middle}.ml-det .tb .ud svg{display:block}
 .cm-modes span{pointer-events:none}
 .cm-modes:after{content:"";position:absolute;right:0;top:0;bottom:0;width:22px;background:linear-gradient(270deg,#1b1b1d,#1b1b1d00);z-index:2;pointer-events:none}
+
+.ml-comp{padding-top:58px!important}
+.ml-det .bt span.off{opacity:.3;pointer-events:none}
+.ml-comp .tb .go.ready{animation:mlp 1.2s infinite}
+@keyframes mlp{0%{box-shadow:0 0 0 0 #0a84ffaa}70%{box-shadow:0 0 0 11px #0a84ff00}100%{box-shadow:0 0 0 0 #0a84ff00}}
+.ml-det .bt{align-items:flex-start}.ml-det .bt span{height:36px;width:52px;display:flex;align-items:center;justify-content:center}
+.ml-comp textarea{color:#000;-webkit-text-fill-color:#000}.ml-comp .f{color:#000}
 /* ---- keyboard / kakao typing ---- */
 #rSend.pulse{animation:snd 1s ease-in-out infinite}@keyframes snd{50%{transform:scale(1.15)}}
 .k-room.kbon .r-input{bottom:333px}
@@ -1240,13 +1247,28 @@ function renderMail(){
 function renderMailDetail(){
   const m=P.mail.mails[mlI];if(!m)return;
   $('#mlDBody').innerHTML=`<div class="ml-dh"><span class="ml-av">${esc(initial(m.from))}</span><div><b>${esc(m.from)}</b><div class="s">收件人：${esc(P.meta.owner)}</div></div><time>${esc(m.time||'')}</time></div><h2>${esc(m.subject)}</h2><div class="ml-tx">${esc(m.body).replace(/\n/g,'<br>')}</div>`;
+  $('#mlReply').classList.toggle('off',!mlCanReply(m));
 }
 $('#mlHome').onclick=()=>closeApp();$('#mlQ').oninput=renderMail;
-$('#mlNew').onclick=()=>{$('#mlTo').textContent='';$('#mlSubj').textContent='新郵件';$('#mlTxt').value='';$('#mlComp').hidden=false;$('#mlTxt').focus()};
+$('#mlNew').onclick=()=>{mlTok++;mlCur=null;$('#mlTxt').readOnly=false;$('#mlTo').textContent='';$('#mlSubj').textContent='新郵件';$('#mlTxt').value='';$('#mlComp').hidden=false;$('#mlTxt').focus()};
 $('#mlBack').onclick=()=>$('#mlDetail').classList.remove('open');
-$('#mlReply').onclick=()=>{const m=P.mail.mails[mlI];if(!m)return;$('#mlTo').textContent=m.from;$('#mlSubj').textContent='回覆：'+m.subject.replace(/^回覆：/,'');$('#mlTxt').value='\n\n— 原始郵件 —\n'+m.body;$('#mlComp').hidden=false;$('#mlTxt').focus();$('#mlTxt').setSelectionRange(0,0)};
-$('#mlCancel').onclick=()=>{$('#mlComp').hidden=true};
-$('#mlSend').onclick=()=>{fireEv('mailsend',{subject:$('#mlSubj').textContent,text:$('#mlTxt').value});$('#mlComp').hidden=true;const t=$('#mlToast');t.hidden=false;setTimeout(()=>{t.hidden=true},1400)};
+const mlReplied=new Set();let mlTok=0,mlCur=null,mlTypeDone=true;
+function mlCanReply(m){return !!(m&&(m.reply||'').trim())&&!mlReplied.has(m)}
+function mlFinishType(){mlTok++;if(mlCur){const ta=$('#mlTxt');ta.value=mlCur.reply.trim()+'\n\n— 原始郵件 —\n'+mlCur.body;ta.readOnly=false;ta.scrollTop=0}mlTypeDone=true;$('#mlSend').classList.add('ready')}
+$('#mlReply').onclick=()=>{const m=P.mail.mails[mlI];if(!mlCanReply(m))return;
+  $('#mlTo').textContent=m.from;$('#mlSubj').textContent='回覆：'+m.subject.replace(/^回覆：/,'');
+  const ta=$('#mlTxt'),tok=++mlTok;mlCur=m;mlTypeDone=false;ta.value='';ta.readOnly=true;$('#mlSend').classList.remove('ready');$('#mlComp').hidden=false;
+  const txt=m.reply.trim();let n=0;
+  const step=()=>{if(tok!==mlTok)return;if(n<txt.length){const ch=txt[n++];ta.value+=ch;setTimeout(step,ch==='\n'?160:/[，。！？、,.!?]/.test(ch)?140:70)}else setTimeout(()=>{if(tok===mlTok)mlFinishType()},200)};
+  setTimeout(step,500)};
+$('#mlCancel').onclick=()=>{mlTok++;mlCur=null;mlTypeDone=true;$('#mlTxt').readOnly=false;$('#mlSend').classList.remove('ready');$('#mlComp').hidden=true};
+$('#mlSend').onclick=()=>{
+  const cur=mlCur;if(cur&&!mlTypeDone)mlFinishType();
+  const subj=$('#mlSubj').textContent,body=cur?cur.reply.trim():$('#mlTxt').value;
+  mlTok++;mlCur=null;mlTypeDone=true;$('#mlTxt').readOnly=false;$('#mlSend').classList.remove('ready');
+  fireEv('mailsend',{subject:subj,text:body});$('#mlComp').hidden=true;
+  if(cur){mlReplied.add(cur);renderMailDetail()}
+  const t=$('#mlToast');t.hidden=false;setTimeout(()=>{t.hidden=true},1400)};
 HOOK.mail=()=>{$('#mlDetail').classList.remove('open');renderMail()};MODS.push(()=>{if(curApp==='mail')renderMail()});
 
 /* ================= Safari ================= */
@@ -2005,8 +2027,8 @@ if(!STANDALONE)(function(){
   }
   function tMail(p){
     listEd(p,P.mail.mails,()=>({from:'',subject:'',body:'',time:'今天',unread:true}),m=>m.subject,(c,m)=>{
-      const r=el('div',{className:'r2'});r.append(text('寄件人',m,'from'),text('時間顯示',m,'time'));c.append(r,text('主旨',m,'subject'),text('內容',m,'body',{area:1}),check('未讀',m,'unread'))},'＋ 新增郵件');
-    p.append(miniH('玩家可以按「回覆」寫信，但不會被儲存。'));
+      const r=el('div',{className:'r2'});r.append(text('寄件人',m,'from'),text('時間顯示',m,'time'));c.append(r,text('主旨',m,'subject'),text('內容',m,'body',{area:1}),text('預先寫好的回信（有填，玩家才能回覆這封；按下回覆會自動打出這段字，按送出才寄出。留空＝不能回覆）',m,'reply',{area:1}),check('未讀',m,'unread'))},'＋ 新增郵件');
+    p.append(miniH('只有填了「預先寫好的回信」的郵件能按回覆，其他郵件的回覆鍵是灰色的。玩家送出後，可以用「事件・劇情觸發」的「玩家寄出郵件後」接續劇情（例如對方回信）。'));
   }
   function tSafari(p){
     const S=P.safari;
