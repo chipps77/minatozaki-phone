@@ -450,6 +450,16 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 .ava.gmos{display:grid;grid-template-columns:1fr 1fr;gap:1.5px;background:#fff;padding:0}
 .ava.gmos i{display:grid;place-items:center;background:#c3d3e8;overflow:hidden}.ava.gmos i svg{width:100%;height:100%}
 .k-sect2{border-top:1px solid #f0f0f0;margin-top:8px;padding-top:14px}
+
+/* 群組頭像：用成員頭像拼起來 */
+.ava.gmos{display:grid;gap:1.5px;background:#fff;padding:0}
+.ava.gmos i{display:grid;place-items:center;background:#c3d3e8 center/cover no-repeat;overflow:hidden}.ava.gmos i svg{width:100%;height:100%}
+.ava.gm1,.ava.gm4{grid-template-columns:1fr 1fr}.ava.gm1{grid-template-columns:1fr}
+.ava.gm2{grid-template-columns:1fr 1fr}
+.ava.gm3{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}.ava.gm3 i:first-child{grid-column:1/3}
+.ava.gmos{place-items:stretch;align-content:stretch}
+.ava.gmos i{width:100%;height:100%;min-width:0;min-height:0}
+.ava.gm2,.ava.gm4{grid-template-rows:1fr 1fr}.ava.gm2{grid-template-rows:1fr}
 </style>
 </head><body>
 <div id="wrap">
@@ -802,6 +812,14 @@ const ICONS=JSON.parse($('#icon-data').textContent);
 /* ---------- helpers ---------- */
 const SIL='<svg viewBox="0 0 100 100" fill="#c8d9ee"><circle cx="50" cy="40.5" r="10.5"/><path d="M29 69.5C29 60 38.5 54.5 50 54.5S71 60 71 69.5v1.5a3.5 3.5 0 0 1-3.5 3.5h-35A3.5 3.5 0 0 1 29 71Z"/></svg>';
 const Y=(c,img)=>img?`<span class="ava ava-img ${c||''}"><img src="${img}" alt=""></span>`:`<span class="ava ${c||''}">${SIL}</span>`;
+const kFriend=n=>P.kakao.rooms.find(r=>!r.group&&r.name===n);
+const grpMem=r=>(r.memberList||[]).map(kFriend).filter(Boolean);
+const grpCnt=r=>(r.memberList&&r.memberList.length)?r.memberList.length+1:(r.members||'');
+function grpAv(r){
+  if(r.avatar)return Y('ph',r.avatar);
+  const ms=grpMem(r).slice(0,4),cell=m=>m&&m.avatar?`<i style="background-image:url(${m.avatar})"></i>`:`<i>${SIL}</i>`;
+  const n=Math.max(1,Math.min(4,ms.length||4));const cells=ms.length?ms.map(cell):[0,1,2,3].map(()=>cell(null));
+  return `<span class="ava gmos gm${n}">${cells.join('')}</span>`}
 const pad=n=>String(n).padStart(2,'0');
 const fmtT=t=>{if(!t)return'';const[h,m]=t.split(':').map(Number);return(h<12?'上午 ':'下午 ')+(h%12||12)+':'+pad(m)};
 const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -995,13 +1013,13 @@ function renderKakao(){
     L.innerHTML=idx.map(i=>{
       const r=rooms[i],m=lastMsg(r),today=ymd(new Date),yd=new Date;yd.setDate(yd.getDate()-1);
       const tm=m?(m.date===today?fmtT(m.time):m.date===ymd(yd)?'昨天':shortD(m.date)):'';
-      return`<button class="k-item" data-room="${i}">${Y(r.avatar?'ph':'',r.avatar)}<span class="tx"><b><span class="nm">${esc(r.name)}</span>${r.group?`<span class="gcnt">${r.members||''}</span>`:''}${r.pinned?PIN:''}</b><span class="pv">${m?esc(m.img?'傳送了一張照片':m.text):'&nbsp;'}</span></span><span class="side"><time>${tm}</time>${r.unread?`<span class="cnt">${r.unread}</span>`:''}</span></button>`}).join('')||'<div class="k-empty">沒有聊天室</div>';
+      return`<button class="k-item" data-room="${i}">${r.group?grpAv(r):Y(r.avatar?'ph':'',r.avatar)}<span class="tx"><b><span class="nm">${esc(r.name)}</span>${r.group?`<span class="gcnt">${grpCnt(r)}</span>`:''}${r.pinned?PIN:''}</b><span class="pv">${m?esc(m.img?'傳送了一張照片':m.text):'&nbsp;'}</span></span><span class="side"><time>${tm}</time>${r.unread?`<span class="cnt">${r.unread}</span>`:''}</span></button>`}).join('')||'<div class="k-empty">沒有聊天室</div>';
   }else if(kTab==='friends'){
     $('#kTitle').textContent='好友';
     const fr=rooms.map((r,i)=>[r,i]).filter(([r])=>!r.group),gr=rooms.map((r,i)=>[r,i]).filter(([r])=>r.group);
     const GAV=r=>r.avatar?Y('ph',r.avatar):`<span class="ava gmos">${'<i>'+SIL+'</i>'.repeat(1)+'<i>'+SIL+'</i><i>'+SIL+'</i><i>'+SIL+'</i>'}</span>`;
     L.innerHTML=`<div class="k-me">${Y(P.kakao.myAvatar?'ph':'',P.kakao.myAvatar)}<b>${esc((P.kakao.nick||'').trim()||'我')}</b></div><div class="k-sect">好友 ${fr.length}</div>`+fr.map(([r,i])=>`<button class="k-item" data-room="${i}">${Y(r.avatar?'ph':'',r.avatar)}<span class="tx"><b>${esc(r.name)}</b></span></button>`).join('')
-      +(gr.length?`<div class="k-sect k-sect2">群組 ${gr.length}</div>`+gr.map(([r,i])=>`<button class="k-item" data-room="${i}">${GAV(r)}<span class="tx"><b><span class="nm">${esc(r.name)}</span><span class="gcnt">${r.members||''}</span></b></span></button>`).join(''):'');
+      +(gr.length?`<div class="k-sect k-sect2">群組 ${gr.length}</div>`+gr.map(([r,i])=>`<button class="k-item" data-room="${i}">${grpAv(r)}<span class="tx"><b><span class="nm">${esc(r.name)}</span><span class="gcnt">${grpCnt(r)}</span></b></span></button>`).join(''):'');
   }else{
     $('#kTitle').textContent={open:'公開聊天',shop:'購物',more:'更多'}[kTab];L.innerHTML='<div class="k-empty">沒有可顯示的項目</div>';
   }
@@ -1010,7 +1028,7 @@ function renderKakao(){
 }
 function openRoom(i){
   const r=P.kakao.rooms[i];if(!r)return;kRoomI=i;r.unread=0;updBadge();
-  $('#rName').innerHTML=esc(r.name)+(r.group?` <span class="gcnt">${r.members||''}</span>`:'');
+  $('#rName').innerHTML=esc(r.name)+(r.group?` <span class="gcnt">${grpCnt(r)}</span>`:'');
   renderRoom();$('#kRoom').classList.add('open');
 }
 const KS=()=>Object.assign({bg:'#a4b1c2',mine:'#dfce45',theirs:'#e5e5e5',tail:false,avAll:true},P.kakao.style||{});
@@ -1027,7 +1045,7 @@ function renderRoom(){applyKStyle();
     const meta=`<span class="meta">${last?fmtT(c.time):''}</span>`;
     const body=c.img?`<button class="photo-img" data-img="${i}"><img src="${c.img}" alt=""></button>`:`<div class="bub">${esc(c.text)}</div>`;
     if(c.from==='me')h+=`<div class="row me${first?' first':''}">${meta}<div class="col">${body}</div></div>`;
-    else{const av=first||KS().avAll;h+=`<div class="row them${first?' first':''}${av&&!first?' av':''}">${av?Y('sm'+(r.avatar&&!c.who?' ph':''),r.avatar&&!c.who?r.avatar:null):''}<div class="col">${first?`<span class="who">${esc(c.who||r.name)}</span>`:''}${body}</div>${meta}</div>`;}
+    else{const av=first||KS().avAll;h+=`<div class="row them${first?' first':''}${av&&!first?' av':''}">${av?(()=>{const f=c.who?kFriend(c.who):null,src=f?f.avatar:(c.who?null:r.avatar);return Y('sm'+(src?' ph':''),src||null)})():''}<div class="col">${first?`<span class="who">${esc(c.who||r.name)}</span>`:''}${body}</div>${meta}</div>`;}
   });
   B.innerHTML=h;const bot=()=>{B.scrollTop=B.scrollHeight};bot();requestAnimationFrame(bot);setTimeout(bot,80);
   $$('#rBody img').forEach(im=>{im.complete||im.addEventListener('load',bot)});
@@ -1805,9 +1823,14 @@ if(!STANDALONE)(function(){
     const draw=()=>{list.innerHTML='';P.kakao.rooms.forEach((r,ri)=>{
       const c=el('div',{className:'card'});const hd=el('div',{className:'hd'});hd.append(el('b',null,esc(r.name||'聊天室')),moveDel(P.kakao.rooms,ri,draw));c.append(hd);
       const a=el('div',{className:'r2'});a.append(text('名稱',r,'name'),text('未讀數（顯示在鎖屏通知）',r,'unread',{type:'number'}));c.append(a);
-      const b=el('div',{className:'r2'});b.append(check('群組聊天',r,'group'),check('置頂',r,'pinned'));c.append(b);
-      if(r.group)c.append(text('成員人數',r,'members',{type:'number'}));
-      c.append(image('頭像',r,'avatar',160));
+      const b=el('div',{className:'r2'});const gck=check('群組聊天',r,'group');const gi=gck.querySelector('input');if(gi)gi.addEventListener('change',()=>setTimeout(draw,0));b.append(gck,check('置頂',r,'pinned'));c.append(b);
+      if(r.group){
+        c.append(miniH('群組成員（從好友裡勾選，加上你自己就是總人數）'));r.memberList=r.memberList||[];
+        const friends=P.kakao.rooms.filter(x=>!x.group&&x.name);
+        if(!friends.length)c.append(miniH('還沒有好友。先新增一般（非群組）的聊天室，就會出現在這裡。'));
+        friends.forEach(f=>{const px={get v(){return r.memberList.includes(f.name)},set v(on){const s=new Set(r.memberList);on?s.add(f.name):s.delete(f.name);r.memberList=[...s]}};c.append(check(f.name,px,'v'))});
+        c.append(image('群組頭像（不放＝用成員頭像自動拼起來）',r,'avatar',160));
+      }else c.append(image('頭像',r,'avatar',160));
       c.append(el('div',{className:'note'},'訊息（誰說的／內容／時間）'));
       const ml=el('div');const mdraw=()=>{ml.innerHTML='';r.msgs.forEach((m,mi)=>{
         const row=el('div',{className:'msgrow'});
