@@ -850,6 +850,33 @@ const PIN='<span class="pin"><svg width="12" height="12" viewBox="0 0 24 24" fil
 const TK='<span class="nbd"><svg viewBox="0 0 30 30" width="100%" height="100%"><rect width="30" height="30" rx="7" fill="#fee500"/><ellipse cx="15" cy="12.5" rx="10.5" ry="7.5" fill="#3a1d1d"/><path d="M9 18.5 8 24l6-4Z" fill="#3a1d1d"/></svg></span>';
 const IN_ARR='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 18V8M6 18h10"/></svg>';
 const OUT_ARR='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M8 6h10v10"/></svg>';
+
+/* ===== 相對時間：資料裡填 ago（距離「玩家打開當下」幾分鐘前），顯示時依真實時間換算 ===== */
+const NOW0=new Date();
+const isN=v=>typeof v==='number'&&isFinite(v);
+const agoDate=m=>new Date(NOW0.getTime()-m*6e4);
+const agoLbl=(m,suf)=>m<1?'剛剛':m<60?Math.round(m)+'分鐘'+(suf||''):m<1440?Math.floor(m/60)+'小時'+(suf||''):m<10080?Math.floor(m/1440)+'天'+(suf||''):shortD(ymd(agoDate(m)));
+const mailLbl=m=>{const d=agoDate(m),t=ymd(NOW0),y=ymd(new Date(NOW0.getTime()-864e5));return ymd(d)===t?pad(d.getHours())+':'+pad(d.getMinutes()):ymd(d)===y?'昨天':m<10080?'週'+WD[d.getDay()]:shortD(ymd(d))};
+function resolveTimes(){
+  const clk=o=>{if(o&&isN(o.ago)){const d=agoDate(o.ago);o.date=ymd(d);o.time=pad(d.getHours())+':'+pad(d.getMinutes())}};
+  try{
+    ((P.kakao&&P.kakao.rooms)||[]).forEach(r=>(r.msgs||[]).forEach(clk));
+    ((P.msgs&&P.msgs.threads)||[]).forEach(t=>(t.msgs||[]).forEach(clk));
+    ((P.bubble&&P.bubble.msgs)||[]).forEach(m=>{if(isN(m.ago)){const d=agoDate(m.ago);m.time=pad(d.getHours())+':'+pad(d.getMinutes())}});
+    const lbl=(o,suf)=>{if(o&&isN(o.ago))o.time=agoLbl(o.ago,suf)};
+    ((P.x&&P.x.tweets)||[]).forEach(t=>{lbl(t);(t.replyList||[]).forEach(r=>lbl(r))});
+    ((P.x&&P.x.dms)||[]).forEach(d=>(d.msgs||[]).forEach(m=>{if(isN(m.ago)){const x=agoDate(m.ago);m.time=pad(x.getHours())+':'+pad(x.getMinutes())}}));
+    const ig=P.ig||{};(ig.posts||[]).concat(ig.feed||[]).forEach(p=>{lbl(p,'前');(p.comments||[]).forEach(c=>lbl(c,'前'))});
+    (ig.followingList||[]).forEach(u=>(u.posts||[]).forEach(p=>{lbl(p,'前');(p.comments||[]).forEach(c=>lbl(c,'前'))}));
+    ((P.mail&&P.mail.mails)||[]).forEach(m=>{if(isN(m.ago)){m.time=mailLbl(m.ago);const d=agoDate(m.ago);m._dt=shortD(ymd(d))+' '+pad(d.getHours())+':'+pad(d.getMinutes())}else m._dt=''});
+    (P.notes||[]).forEach(n=>{if(isN(n.dayOff))n.date=ymd(new Date(NOW0.getTime()-n.dayOff*864e5))});
+    const B=P.bubble;if(B){if(isN(B.chatDayOff)){const d=new Date(NOW0.getTime()-B.chatDayOff*864e5);B.chatDate=(d.getMonth()+1)+'月'+d.getDate()+'日'}
+      if(B.daysAuto&&!B.daysBase)B.daysBase=ymd(NOW0);if(!B.daysAuto)delete B.daysBase;
+      if(B.daysAuto&&B.daysBase){const b=parseD(B.daysBase),t=parseD(ymd(NOW0));B._days=(+B.days||0)+Math.max(0,Math.round((t-b)/864e5))}else B._days=+B.days||0}
+    const C=P.cal;if(C){if(isN(C.startOff)){const d=new Date(NOW0.getFullYear(),NOW0.getMonth()+C.startOff,1);C.start=d.getFullYear()+'-'+pad(d.getMonth()+1)}
+      (C.events||[]).forEach(e=>{if(isN(e.off)){e.date=ymd(new Date(NOW0.getTime()+e.off*864e5))}})}
+  }catch(e){console.warn('resolveTimes',e)}
+}
 const lastMsg=r=>r.msgs&&r.msgs.length?r.msgs[r.msgs.length-1]:null;
 const sortKey=m=>(m.date||'')+' '+(m.time||'00:00');
 
@@ -1251,7 +1278,7 @@ function renderMail(){
 }
 function renderMailDetail(){
   const m=P.mail.mails[mlI];if(!m)return;
-  $('#mlDBody').innerHTML=`<div class="ml-dh"><span class="ml-av">${esc(initial(m.from))}</span><div><b>${esc(m.from)}</b><div class="s">收件人：${esc(P.meta.owner)}</div></div><time>${esc(m.time||'')}</time></div><h2>${esc(m.subject)}</h2><div class="ml-tx">${esc(m.body).replace(/\n/g,'<br>')}</div>`+(mlReplied.has(m)?`<div class="ml-sent"><div class="ml-sh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 016 6v3"/></svg><b>${esc(P.meta.owner)}</b><span>已回覆 · ${esc(mlReplied.get(m).time)}</span></div><div class="s">收件人：${esc(m.from)}</div><div class="ml-tx">${esc(mlReplied.get(m).text).replace(/\n/g,'<br>')}</div></div>`:'');
+  $('#mlDBody').innerHTML=`<div class="ml-dh"><span class="ml-av">${esc(initial(m.from))}</span><div><b>${esc(m.from)}</b><div class="s">收件人：${esc(P.meta.owner)}</div></div><time>${esc(m._dt||m.time||'')}</time></div><h2>${esc(m.subject)}</h2><div class="ml-tx">${esc(m.body).replace(/\n/g,'<br>')}</div>`+(mlReplied.has(m)?`<div class="ml-sent"><div class="ml-sh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 016 6v3"/></svg><b>${esc(P.meta.owner)}</b><span>已回覆 · ${esc(mlReplied.get(m).time)}</span></div><div class="s">收件人：${esc(m.from)}</div><div class="ml-tx">${esc(mlReplied.get(m).text).replace(/\n/g,'<br>')}</div></div>`:'');
   $('#mlReply').classList.toggle('off',!mlCanReply(m));
 }
 $('#mlHome').onclick=()=>closeApp();$('#mlQ').oninput=renderMail;
@@ -1385,7 +1412,7 @@ function renderBubble(){
     }else if(bbV==='chats'){
       body=hd('CHATS')+`<div class="bb2-sc"><div class="bb2-sec">我的最愛聊天室</div><div class="bb2-ch" data-room="1">${bbAv(B.avatar,B.artist,1)}<div class="mid"><b>${esc(B.artist)}<em class="ab">ARTIST</em></b><span>${esc(lastA.text||(lastA.img?'[圖片]':''))}</span></div><time>${esc(B.chatDate||'')}</time></div></div>`;
     }else{
-      body=hd('更多')+`<div class="bb2-sc"><div class="bb2-sec">我的訂閱</div><div class="bb2-fr">${bbAv(B.avatar,B.artist,1)}<div><b>${esc(B.artist)}</b><span>${esc(B.appName||'bubble')} +${esc(B.days||0)}天</span></div></div><div class="bb2-sec">設定</div><div class="bb2-set">通知設定</div><div class="bb2-set">帳號管理</div><div class="bb2-set">客服中心</div></div>`;
+      body=hd('更多')+`<div class="bb2-sc"><div class="bb2-sec">我的訂閱</div><div class="bb2-fr">${bbAv(B.avatar,B.artist,1)}<div><b>${esc(B.artist)}</b><span>${esc(B.appName||'bubble')} +${esc(B._days!=null?B._days:(B.days||0))}天</span></div></div><div class="bb2-sec">設定</div><div class="bb2-set">通知設定</div><div class="bb2-set">帳號管理</div><div class="bb2-set">客服中心</div></div>`;
     }
     R.innerHTML=`<div class="bb2-tab">${body}${tabs}</div>`;
     $$('#bbRoot [data-t]').forEach(b=>b.onclick=()=>{bbV=b.dataset.t;renderBubble()});
@@ -1747,7 +1774,7 @@ ONUNLOCK.push(()=>fireEv('unlock'));
 function setWall(){G.style.setProperty('--wp',P.meta.wallpaper?`url("${P.meta.wallpaper}")`:'')
   ;document.title=P.meta.title||'手機';}
 function renderAll(){
-  setWall();renderLockNotifs();renderHome();
+  resolveTimes();setWall();renderLockNotifs();renderHome();
   if(curApp==='kakao'){renderKakao();if(kRoomI!=null)renderRoom()}else renderKakao();
   renderMsgs();if(mI!=null&&P.msgs.threads[mI])renderThread();
     renderNotes();renderPhotos();MODS.forEach(f=>f());renderPass();
@@ -1821,6 +1848,11 @@ if(!STANDALONE)(function(){
   function check(label,o,k){
     const w=el('label',{className:'chk'});const c=el('input',{type:'checkbox',checked:!!o[k]});
     c.onchange=()=>{o[k]=c.checked;touch()};w.append(c,label);return w;
+  }
+  function agoF(label,o,k,ph){k=k||'ago';
+    const w=el('div',{className:'f'});w.append(el('label',{},label));
+    const i=el('input',{type:'number',value:isN(o[k])?o[k]:'',placeholder:ph||'留空＝用下面寫死的'});
+    i.oninput=()=>{if(i.value==='')delete o[k];else o[k]=+i.value;touch()};w.append(i);return w;
   }
   function audio(label,o,k,onDur){
     const w=el('div',{className:'f'});w.style.marginTop='10px';
@@ -1901,7 +1933,7 @@ if(!STANDALONE)(function(){
         const rr=el('div',{className:'r2'});
         const d=el('input',{type:'text',value:m.date||'',placeholder:'2026-10-24'});d.oninput=()=>{m.date=d.value;touch()};
         const tm=el('input',{type:'text',value:m.time||'',placeholder:'23:41'});tm.oninput=()=>{m.time=tm.value;touch()};rr.append(d,tm);
-        c2.append(who,t,rr,image('照片',m,'img',900));
+        c2.append(who,t,rr,agoF('或：幾分鐘前（填了就依玩家打開的真實時間換算，上面日期時間作廢；60＝1小時、1440＝1天）',m),image('照片',m,'img',900));
         row.append(s,c2,moveDel(r.msgs,mi,mdraw));ml.append(row)})};
       mdraw();c.append(ml,addBtn('＋ 新增一則訊息',()=>{const l=lastMsg(r)||now();r.msgs.push({from:'them',text:'',time:l.time||now().time,date:l.date||now().date});touch();mdraw()}));
       c.append(el('div',{className:'note'},'🎬 劇本打字：玩家進入這個聊天室時，我方要說的話會像真人打字一樣出現在輸入框，等玩家按「發送」後，對方依序回覆；再下一句劇本接著出現。'));
@@ -1919,7 +1951,7 @@ if(!STANDALONE)(function(){
         const row=el('div',{className:'msgrow'});const s=el('select');[['them','對方'],['me','我']].forEach(([v,x])=>s.append(el('option',{value:v,textContent:x,selected:m.from===v})));s.onchange=()=>{m.from=s.value;touch()};
         const c2=el('div',{className:'c2'});const tx=el('textarea');tx.value=m.text||'';tx.oninput=()=>{m.text=tx.value;touch()};
         const rr=el('div',{className:'r2'});const d=el('input',{type:'text',value:m.date||'',placeholder:'2026-10-24'});d.oninput=()=>{m.date=d.value;touch()};const tm=el('input',{type:'text',value:m.time||'',placeholder:'23:41'});tm.oninput=()=>{m.time=tm.value;touch()};rr.append(d,tm);
-        c2.append(tx,rr);row.append(s,c2,moveDel(t.msgs,mi,mdraw));ml.append(row)})};
+        c2.append(tx,rr,agoF('或：幾分鐘前（填了就依真實時間換算）',m));row.append(s,c2,moveDel(t.msgs,mi,mdraw));ml.append(row)})};
       mdraw();c.append(ml,addBtn('＋ 新增一則',()=>{t.msgs.push(Object.assign({from:'them',text:''},now()));touch();mdraw()}));list.append(c)})};
     const list=el('div');draw();p.append(list,addBtn('＋ 新增對話',()=>{P.msgs.threads.push({name:'新對話',open:true,msgs:[]});touch();draw()}));
   }
@@ -1987,11 +2019,11 @@ if(!STANDALONE)(function(){
       const a=el('div',{className:'r2'});a.append(text('發文者（留空＝本人）',t,'who'),text('帳號',t,'handle'));
       c.append(a,text('內容',t,'text',{area:1}),image('附圖',t,'img',900),image('發文者頭像',t,'avatar',160));
       const b=el('div',{className:'r2'});b.append(text('時間',t,'time'),text('觀看',t,'views'));
-      const d=el('div',{className:'r2'});d.append(text('回覆數（留空＝依下方回覆數）',t,'replies'),text('轉發',t,'rts'),text('喜歡',t,'likes'));c.append(b,d);
+      const d=el('div',{className:'r2'});d.append(text('回覆數（留空＝依下方回覆數）',t,'replies'),text('轉發',t,'rts'),text('喜歡',t,'likes'));c.append(b,agoF('幾分鐘前（填了就依玩家打開的真實時間換算：60＝1小時、1440＝1天；留空則用上面寫死的文字）',t),d);
       c.append(miniH('這則貼文底下的回覆（玩家點進貼文看到）'));t.replyList=t.replyList||[];
       listEd(c,t.replyList,()=>({who:'',handle:'',text:'',time:'1小時',likes:''}),r=>(r.who||X.name)+'：'+(r.text||'').slice(0,10),(cc,r)=>{
         const q=el('div',{className:'r2'});q.append(text('回覆者（留空＝本人）',r,'who'),text('帳號',r,'handle'));cc.append(q,text('內容',r,'text',{area:1}));
-        const q2=el('div',{className:'r2'});q2.append(text('時間',r,'time'),text('喜歡',r,'likes'));cc.append(q2)},'＋ 新增回覆')},'＋ 新增貼文');
+        const q2=el('div',{className:'r2'});q2.append(text('時間',r,'time'),text('喜歡',r,'likes'));cc.append(q2,agoF('幾分鐘前',r))},'＋ 新增回覆')},'＋ 新增貼文');
     p.append(el('h3',{style:'margin:18px 0 0;font-size:14px'},'私訊'));X.dms=X.dms||[];
     listEd(p,X.dms,()=>({name:'新對象',handle:'',avatar:null,msgs:[]}),d=>d.name,(c,d)=>{
       const a=el('div',{className:'r2'});a.append(text('名稱',d,'name'),text('帳號',d,'handle'));c.append(a,image('頭像',d,'avatar',160));
@@ -2001,8 +2033,8 @@ if(!STANDALONE)(function(){
     const B=P.bubble;
     p.append(select('這支手機的主人是',B,'mode',[['sub','訂閱者（看藝人發的泡泡）'],['artist','藝人（看粉絲的回覆）']]));
     const a=el('div',{className:'r2'});a.append(text('App 名稱',B,'appName'),text('藝人名字',B,'artist'));p.append(a);
-    const b=el('div',{className:'r2'});b.append(text('我的暱稱',B,'nick'),text('訂閱天數',B,'days',{type:'number'}));p.append(b,image('藝人頭像',B,'avatar',160),image('我的頭像',B,'myAvatar',160));
-    p.append(check('已訂閱（聊天室顯示「bubble ♥ +天數」；未訂閱時改顯示下方公告）',B,'subscribed'),text('藝人個人狀態（好友列表顯示）',B,'status'),text('未訂閱時的公告（例如：我們是不是可以再見呢？）',B,'notice'),text('聊天列表右側日期',B,'chatDate'),image('聊天室背景照片',B,'wallpaper',900));
+    const b=el('div',{className:'r2'});b.append(text('我的暱稱',B,'nick'),text('訂閱天數',B,'days',{type:'number'}),check('訂閱天數隨真實日期每天自動 +1（從勾選這天起算）',B,'daysAuto'));p.append(b,image('藝人頭像',B,'avatar',160),image('我的頭像',B,'myAvatar',160));
+    p.append(check('已訂閱（聊天室顯示「bubble ♥ +天數」；未訂閱時改顯示下方公告）',B,'subscribed'),text('藝人個人狀態（好友列表顯示）',B,'status'),text('未訂閱時的公告（例如：我們是不是可以再見呢？）',B,'notice'),text('聊天列表右側日期（寫死）',B,'chatDate'),agoF('或：幾天前（依玩家真實日期換算）',B,'chatDayOff','留空＝用上面寫死的'),image('聊天室背景照片',B,'wallpaper',900));
     p.append(el('h3',{style:'margin:16px 0 0;font-size:14px'},'好友列表（推薦好友）'));B.friends=B.friends||[];
     listEd(p,B.friends,()=>({name:'',status:'',avatar:null}),f=>f.name,(c,f)=>{const q=el('div',{className:'r2'});q.append(text('名字',f,'name'),text('狀態文字',f,'status'));c.append(q,image('頭像',f,'avatar',160))},'＋ 新增好友');
     p.append(el('h3',{style:'margin:16px 0 0;font-size:14px'},'聊天室訊息'));
@@ -2023,12 +2055,12 @@ if(!STANDALONE)(function(){
     p.append(el('h3',{style:'margin:16px 0 0;font-size:14px'},'首頁動態（別人的貼文）'));
     I.feed=I.feed||[];
     listEd(p,I.feed,()=>({who:'',avatar:null,img:null,caption:'',likes:0,time:'1小時前',comments:[]}),x=>x.who,(c,x)=>{
-      const r=el('div',{className:'r2'});r.append(text('帳號',x,'who'),text('時間',x,'time'));c.append(r,image('頭像',x,'avatar',160),image('照片',x,'img',900),text('說明文字',x,'caption',{area:1}),text('讚數',x,'likes',{type:'number'}));x.comments=x.comments||[];c.append(miniH('留言'));listEd(c,x.comments,()=>({who:'',text:''}),m=>m.who,(cc,m)=>{const q=el('div',{className:'r2'});q.append(text('帳號',m,'who'),text('內容',m,'text'));cc.append(q)},'＋ 新增留言')},'＋ 新增動態');
+      const r=el('div',{className:'r2'});r.append(text('帳號',x,'who'),text('時間',x,'time'));c.append(r,agoF('幾分鐘前（填了就依玩家打開的真實時間換算：60＝1小時、1440＝1天；留空則用上面寫死的文字）',x),image('頭像',x,'avatar',160),image('照片',x,'img',900),text('說明文字',x,'caption',{area:1}),text('讚數',x,'likes',{type:'number'}));x.comments=x.comments||[];c.append(miniH('留言'));listEd(c,x.comments,()=>({who:'',text:''}),m=>m.who,(cc,m)=>{const q=el('div',{className:'r2'});q.append(text('帳號',m,'who'),text('內容',m,'text'));cc.append(q)},'＋ 新增留言')},'＋ 新增動態');
     p.append(el('h3',{style:'margin:18px 0 0;font-size:14px'},'追蹤中的人（可個別設定：能點進去看檔案／只顯示不能點）'));I.followingList=I.followingList||[];
     listEd(p,I.followingList,()=>({handle:'new_user',name:'',avatar:null,bio:'',followers:'0',following:'0',open:true,posts:[]}),u=>u.handle+(u.open===false?'（僅顯示）':''),(c,u)=>{if(u.open===undefined)u.open=true;c.append(check('可點進去看他的個人檔案（取消勾選＝只顯示在名單、不能點）',u,'open'));
       const r=el('div',{className:'r2'});r.append(text('帳號',u,'handle'),text('名稱',u,'name'));c.append(r,image('大頭貼',u,'avatar',200),text('簡介',u,'bio',{area:1}));
       const r2=el('div',{className:'r2'});r2.append(text('粉絲數',u,'followers'),text('追蹤中',u,'following'));c.append(r2,miniH('他的貼文'));u.posts=u.posts||[];
-      listEd(c,u.posts,()=>({img:null,caption:'',likes:0,time:'1天前',comments:[]}),x=>x.caption,(cc,x)=>{cc.append(image('照片',x,'img',900),text('說明文字',x,'caption',{area:1}));const q=el('div',{className:'r2'});q.append(text('讚數',x,'likes',{type:'number'}),text('時間',x,'time'));cc.append(q);x.comments=x.comments||[];listEd(cc,x.comments,()=>({who:'',text:''}),m=>m.who,(c3,m)=>{const z=el('div',{className:'r2'});z.append(text('帳號',m,'who'),text('內容',m,'text'));c3.append(z)},'＋ 新增留言')},'＋ 新增貼文')},'＋ 新增追蹤對象');
+      listEd(c,u.posts,()=>({img:null,caption:'',likes:0,time:'1天前',comments:[]}),x=>x.caption,(cc,x)=>{cc.append(image('照片',x,'img',900),text('說明文字',x,'caption',{area:1}));const q=el('div',{className:'r2'});q.append(text('讚數',x,'likes',{type:'number'}),text('時間',x,'time'));cc.append(q,agoF('幾分鐘前',x));x.comments=x.comments||[];listEd(cc,x.comments,()=>({who:'',text:''}),m=>m.who,(c3,m)=>{const z=el('div',{className:'r2'});z.append(text('帳號',m,'who'),text('內容',m,'text'));c3.append(z)},'＋ 新增留言')},'＋ 新增貼文')},'＋ 新增追蹤對象');
   }
 
   function tEv(p){
@@ -2051,7 +2083,7 @@ if(!STANDALONE)(function(){
   }
   function tMail(p){
     listEd(p,P.mail.mails,()=>({from:'',subject:'',body:'',time:'今天',unread:true}),m=>m.subject,(c,m)=>{
-      const r=el('div',{className:'r2'});r.append(text('寄件人',m,'from'),text('時間顯示',m,'time'));c.append(r,text('主旨',m,'subject'),text('內容',m,'body',{area:1}),text('預先寫好的回信（有填，玩家才能回覆這封；按下回覆會自動打出這段字，按送出才寄出。留空＝不能回覆）',m,'reply',{area:1}),check('未讀',m,'unread'))},'＋ 新增郵件');
+      const r=el('div',{className:'r2'});r.append(text('寄件人',m,'from'),text('時間顯示（寫死）',m,'time'));c.append(r,agoF('幾分鐘前（填了就依玩家打開的真實時間換算：60＝1小時、1440＝1天；留空則用上面寫死的文字）',m),text('主旨',m,'subject'),text('內容',m,'body',{area:1}),text('預先寫好的回信（有填，玩家才能回覆這封；按下回覆會自動打出這段字，按送出才寄出。留空＝不能回覆）',m,'reply',{area:1}),check('未讀',m,'unread'))},'＋ 新增郵件');
     p.append(miniH('只有填了「預先寫好的回信」的郵件能按回覆，其他郵件的回覆鍵是灰色的。玩家送出後，可以用「事件・劇情觸發」的「玩家寄出郵件後」接續劇情（例如對方回信）。'));
   }
   function tSafari(p){
@@ -2079,8 +2111,8 @@ if(!STANDALONE)(function(){
 
   function tCal(p){
     P.cal=P.cal||{start:'2026-10',months:3,events:[]};const C=P.cal;
-    const r=el('div',{className:'r2'});r.append(text('起始月份（例：2026-10）',C,'start'),text('顯示幾個月',C,'months',{type:'number'}));p.append(r,miniH('事件日期格式 2026-10-24。「連續天數」大於 1 會畫成橫條。'));
-    listEd(p,C.events,()=>({date:'',t:'',c:'b',n:1,ic:false}),x=>x.date+' '+x.t,(c,x)=>{const a=el('div',{className:'r2'});a.append(text('日期',x,'date',{ph:'2026-10-24'}),text('標題',x,'t'));const b=el('div',{className:'r2'});b.append(select('顏色',x,'c',[['b','藍'],['g','綠'],['p','紫']]),text('連續天數',x,'n',{type:'number'}));c.append(a,b,check('標題前加圓點',x,'ic'))},'＋ 新增行程');
+    const r=el('div',{className:'r2'});r.append(text('起始月份（例：2026-10）',C,'start'),agoF('或：相對本月（-1＝上個月開始、0＝本月開始，依玩家真實日期換算）',C,'startOff','留空＝用起始月份'),text('顯示幾個月',C,'months',{type:'number'}));p.append(r,miniH('事件日期格式 2026-10-24。「連續天數」大於 1 會畫成橫條。'));
+    listEd(p,C.events,()=>({date:'',t:'',c:'b',n:1,ic:false}),x=>x.date+' '+x.t,(c,x)=>{const a=el('div',{className:'r2'});a.append(text('日期',x,'date',{ph:'2026-10-24'}),text('標題',x,'t'),agoF('或：距離今天幾天（0＝今天、2＝後天、-1＝昨天；依玩家真實日期換算）',x,'off','留空＝用日期'));const b=el('div',{className:'r2'});b.append(select('顏色',x,'c',[['b','藍'],['g','綠'],['p','紫']]),text('連續天數',x,'n',{type:'number'}));c.append(a,b,check('標題前加圓點',x,'ic'))},'＋ 新增行程');
   }
   function tClock(p){
     P.clock=P.clock||{cities:[],alarms:[]};const C=P.clock;
