@@ -1512,7 +1512,13 @@ const _openRoom0=openRoom;openRoom=function(i){_openRoom0(i);kStart(i)};
 $('#kBack').addEventListener('click',()=>{kTok++;kBusy=false;kPend=null;kRoomEl().classList.remove('kbon');$('#rText').readOnly=false;$('#rText').value=''});
 
 /* ================= Spotify ================= */
-let spI=0,spT=0,spPlay=false;const spLiked=new Set();
+let spI=0,spT=0,spPlay=false;const spAu=new Audio();spAu.preload='auto';let spAuSrc='';
+const spHas=()=>{const t=spTr()[spI];return !!(t&&t.audio)};
+function spSync(){const t=spTr()[spI];if(!t||!t.audio){if(spAuSrc){spAu.pause();spAuSrc=''}return}
+  if(spAuSrc!==t.audio){spAu.src=t.audio;spAuSrc=t.audio;try{spAu.currentTime=spT||0}catch(e){}}
+  if(spPlay){const p=spAu.play();if(p&&p.catch)p.catch(()=>{})}else spAu.pause()}
+spAu.addEventListener('loadedmetadata',()=>{const t=spTr()[spI];if(t&&t.audio&&isFinite(spAu.duration)&&spAu.duration>0){t.dur=Math.round(spAu.duration);if(typeof curApp!=='undefined'&&curApp==='spot')renderSpot()}});
+spAu.addEventListener('ended',()=>{spNext()});const spLiked=new Set();
 const PL='<path d="M8 5v14l11-7z"/>',PA='<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
 const spFmt=s=>Math.floor(s/60)+':'+pad(Math.floor(s%60));
 const spTr=()=>(P.spotify&&P.spotify.tracks)||[];
@@ -1524,16 +1530,16 @@ function renderSpot(){
   $('#sDur').textContent=spFmt(t.dur||0);$('#sCur').textContent=spFmt(spT);$('#sBar').style.width=(t.dur?spT/t.dur*100:0)+'%';
   $('#sPlayIco').innerHTML=spPlay?PA:PL;$('#isPlayIco').innerHTML=spPlay?PA:PL;$('#sLike').classList.toggle('on',spLiked.has(spI));
   $('#sQueue').innerHTML=T.map((n,o)=>`<button class="s-q${o===spI?' on':''}" data-t="${o}"><span class="qa" style="background:${spBg(n.art)}"></span><span style="min-width:0"><b>${esc(n.title)}</b><span>${esc(n.artist)} · ${spFmt(n.dur||0)}</span></span></button>`).join('');
-  $$('#sQueue [data-t]').forEach(b=>b.onclick=()=>{spI=+b.dataset.t;spT=0;spPlay=true;renderSpot();updIsl()});
+  $$('#sQueue [data-t]').forEach(b=>b.onclick=()=>{spI=+b.dataset.t;spT=0;spPlay=true;renderSpot();spSync();spAu.currentTime=0;updIsl()});
   $('#isArt').style.background=spBg(t.art);$('#isArtBig').style.background=spBg(t.art);$('#isTitle').textContent=t.title;$('#isArtist').textContent=t.artist;
 }
-function spToggle(){if(!spTr().length)return;spPlay=!spPlay;renderSpot();updIsl()}
-function spNext(){const n=spTr().length;if(!n)return;spI=(spI+1)%n;spT=0;renderSpot();updIsl()}
-function spPrev(){const n=spTr().length;if(!n)return;if(spT<=3)spI=(spI+n-1)%n;spT=0;renderSpot();updIsl()}
+function spToggle(){if(!spTr().length)return;spPlay=!spPlay;renderSpot();spSync();updIsl()}
+function spNext(){const n=spTr().length;if(!n)return;spI=(spI+1)%n;spT=0;renderSpot();spSync();if(spHas())try{spAu.currentTime=0}catch(e){}updIsl()}
+function spPrev(){const n=spTr().length;if(!n)return;if(spT<=3)spI=(spI+n-1)%n;spT=0;renderSpot();spSync();if(spHas())try{spAu.currentTime=0}catch(e){}updIsl()}
 $('#sPlay').onclick=spToggle;$('#sNext').onclick=spNext;$('#sPrev').onclick=spPrev;$('#isPlay').onclick=e=>{e.stopPropagation();spToggle()};$('#isNext').onclick=e=>{e.stopPropagation();spNext()};$('#isPrev').onclick=e=>{e.stopPropagation();spPrev()};
 $('#sLike').onclick=()=>{spLiked.has(spI)?spLiked.delete(spI):spLiked.add(spI);renderSpot()};
 $('#sShuf').onclick=e=>e.currentTarget.classList.toggle('on');$('#sRep').onclick=e=>e.currentTarget.classList.toggle('on');
-$('#sTrack').onclick=e=>{const r=e.currentTarget.getBoundingClientRect(),t=spTr()[spI];if(t){spT=(e.clientX-r.left)/r.width*t.dur;renderSpot()}};
+$('#sTrack').onclick=e=>{const r=e.currentTarget.getBoundingClientRect(),t=spTr()[spI];if(t){spT=(e.clientX-r.left)/r.width*t.dur;if(t.audio)try{spAu.currentTime=spT}catch(er){}renderSpot()}};
 function updIsl(){
   const I=$('#island'),inSp=curApp==='spot';
   I.classList.toggle('compact',spPlay&&!inSp&&!I.classList.contains('calling')&&!I.classList.contains('expanded'));
@@ -1541,7 +1547,7 @@ function updIsl(){
 }
 $('#island').addEventListener('click',()=>{const I=$('#island');if(I.classList.contains('calling')||!spTr().length||!spPlay&&!I.classList.contains('expanded'))return;
   I.classList.toggle('expanded');I.classList.remove('compact');updIsl();clearTimeout(I._t);if(I.classList.contains('expanded'))I._t=setTimeout(()=>{I.classList.remove('expanded');updIsl()},5000)});
-setInterval(()=>{if(spPlay){const t=spTr()[spI];spT+=1;if(!t||spT>=t.dur)spNext();else if(curApp==='spot'){$('#sCur').textContent=spFmt(spT);$('#sBar').style.width=spT/t.dur*100+'%'}}updIsl()},1000);
+setInterval(()=>{if(spPlay){const t=spTr()[spI];if(t&&t.audio&&spAuSrc===t.audio){spT=spAu.currentTime||0;if(curApp==='spot'){$('#sCur').textContent=spFmt(spT);$('#sBar').style.width=(t.dur?spT/t.dur*100:0)+'%'}}else{spT+=1;if(!t||spT>=t.dur)spNext();else if(curApp==='spot'){$('#sCur').textContent=spFmt(spT);$('#sBar').style.width=spT/t.dur*100+'%'}}}updIsl()},1000);
 HOOK.spot=renderSpot;MODS.push(()=>{renderSpot()});
 
 /* ================= Camera（前後置兩張圖都預先載入，切換不用等） ================= */
@@ -1756,7 +1762,8 @@ if(!STANDALONE)(function(){
   let timer=null;
   const stEl=el0();function el0(){const d=document.createElement('div');d.id='ghStat';d.style.cssText='position:fixed;right:14px;bottom:14px;z-index:99;background:#222;color:#fff;font:13px/1 system-ui;padding:8px 12px;border-radius:999px;opacity:0;transition:.2s;pointer-events:none';document.body.append(d);return d}
   const setSt=(t,keep)=>{stEl.textContent=t;stEl.style.opacity=t?'.92':'0';clearTimeout(setSt.t);if(!keep)setSt.t=setTimeout(()=>stEl.style.opacity='0',2200)};
-  const IMG_RE=/^data:image\/(jpeg|png|webp|gif);base64,/;
+  const IMG_RE=/^data:(?:image\/(jpeg|png|webp|gif)|audio\/(mpeg|mp3|mp4|x-m4a|aac|ogg|wav|webm));base64,/;
+  const AEXT={mpeg:'mp3',mp3:'mp3',mp4:'m4a','x-m4a':'m4a',aac:'aac',ogg:'ogg',wav:'wav',webm:'webm'};
   const b2u=b=>{const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u};
   const u2b=str=>{let s='';new TextEncoder().encode(str).forEach(c=>s+=String.fromCharCode(c));return btoa(s)};
   const done=new Set();let saving=false,again=false,dirty=false,gt=null;
@@ -1774,7 +1781,7 @@ if(!STANDALONE)(function(){
       for(const d of imgs){const m=d.match(IMG_RE),b64=d.slice(m[0].length);
         const h=new Uint8Array(await crypto.subtle.digest('SHA-256',b2u(b64)));
         const hex=Array.from(h.slice(0,8),x=>x.toString(16).padStart(2,'0')).join('');
-        const rel='img/'+hex+'.'+(m[1]==='jpeg'?'jpg':m[1]);
+        const rel=m[2]?'audio/'+hex+'.'+AEXT[m[2]]:'img/'+hex+'.'+(m[1]==='jpeg'?'jpg':m[1]);
         const st=await putImg(rel,b64);
         if(st===401||st===403){setSt('儲存失敗：權杖無效或沒有寫入權限',1);return}
         if(st){setSt('儲存失敗：圖片上傳失敗，稍後會再試',1);return}
@@ -1814,6 +1821,18 @@ if(!STANDALONE)(function(){
   function check(label,o,k){
     const w=el('label',{className:'chk'});const c=el('input',{type:'checkbox',checked:!!o[k]});
     c.onchange=()=>{o[k]=c.checked;touch()};w.append(c,label);return w;
+  }
+  function audio(label,o,k,onDur){
+    const w=el('div',{className:'f'});w.style.marginTop='10px';
+    const st=el('span',{className:'note'});const show=()=>{const v=o[k];st.textContent=v?('已設定：'+(v.startsWith('data:')?'（本次上傳，儲存後會變成檔案）':v)):'尚未設定（沒有音檔時，播放器只會模擬播放）'};show();
+    const f=el('input',{type:'file',accept:'audio/*,.mp3,.m4a'});f.hidden=true;
+    const b=el('button',{className:'mini',textContent:'上傳 mp3',type:'button'});b.onclick=()=>f.click();
+    const u=el('button',{className:'mini',textContent:'貼網址',type:'button'});u.style.marginLeft='6px';u.onclick=()=>{const v=prompt('貼上音檔網址，或相對路徑（例如 audio/song.mp3）',typeof o[k]==='string'&&!o[k].startsWith('data:')?o[k]:'');if(v&&v.trim()){o[k]=v.trim();show();touch()}};
+    const d=el('button',{className:'mini dg',textContent:'清除',type:'button'});d.style.marginLeft='6px';d.onclick=()=>{o[k]=null;show();touch()};
+    f.onchange=()=>{const fl=f.files[0];if(!fl)return;if(fl.size>25e6){alert('這個音檔超過 25MB，請先壓縮（建議 10MB 以下）。');return}
+      const fr=new FileReader;fr.onload=()=>{let v=fr.result;if(!/^data:audio\//.test(v))v=v.replace(/^data:[^;]*;/,'data:audio/mpeg;');o[k]=v;show();
+        try{const au=new Audio(v);au.onloadedmetadata=()=>{if(isFinite(au.duration)&&onDur)onDur(Math.round(au.duration));touch()}}catch(e){}touch()};fr.readAsDataURL(fl)};
+    w.append(el('div',{className:'note'},label),st,el('br'),b,u,d,f);return w;
   }
   function image(label,o,k,max){
     const w=el('div',{className:'f'});w.style.marginTop='10px';
@@ -2051,7 +2070,7 @@ if(!STANDALONE)(function(){
   function tSpot(p){
     P.spotify=P.spotify||{playlist:'',tracks:[]};const S=P.spotify;
     p.append(text('播放清單名稱',S,'playlist'),miniH('歌曲長度填「秒」。玩家按播放時，動態島會出現音樂小條。'));
-    listEd(p,S.tracks,()=>({title:'',artist:'',dur:200,art:null}),t=>t.title,(c,t)=>{const q=el('div',{className:'r2'});q.append(text('歌名',t,'title'),text('歌手',t,'artist'));c.append(q,text('長度（秒）',t,'dur',{type:'number'}),image('封面',t,'art',400))},'＋ 新增歌曲');
+    listEd(p,S.tracks,()=>({title:'',artist:'',dur:200,art:null}),t=>t.title,(c,t)=>{const q=el('div',{className:'r2'});q.append(text('歌名',t,'title'),text('歌手',t,'artist'));c.append(q,text('長度（秒）（上傳 mp3 會自動填）',t,'dur',{type:'number'}),audio('音檔（選填，上傳後玩家點播放會真的出聲）',t,'audio',n=>{t.dur=n}),image('封面',t,'art',400))},'＋ 新增歌曲');
   }
   function tCamera(p){
     P.camera=P.camera||{back:null,front:null,thumb:null};if(P.camera.view&&!P.camera.back)P.camera.back=P.camera.view;
