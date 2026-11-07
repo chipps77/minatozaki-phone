@@ -477,6 +477,7 @@ body.standalone #modeBtn,body.standalone #editor{display:none!important}
 .ava.gmos i{width:100%;height:100%;min-width:0;min-height:0}
 .ava.gm2,.ava.gm4{grid-template-rows:1fr 1fr}.ava.gm2{grid-template-rows:1fr}
 .ni-in input{background:#fff}
+.ni-dm.nolink{cursor:default}
 </style>
 </head><body>
 <div id="wrap">
@@ -1426,7 +1427,7 @@ function igLike(p){p._lk=!p._lk;renderIg()}
 function igPostHtml(it,i,full){const p=it.p,who=it.who;p.comments=p.comments||[];
   return`<article class="ni-p" data-k="${i}"><div class="ni-ph" data-u="${esc(who)}">${igAva(it.av,who,'s')}<b>${esc(who)}</b></div>${p.img?`<img class="ni-pim" src="${p.img}" alt="">`:`<div class="ni-pim ph"><i>${esc((p.caption||'').slice(0,40))}</i></div>`}<div class="ni-ac"><span data-lk="${i}">${igHeart(p._lk)}</span><span data-op="${i}">${IGC}</span><span>${IGS}</span></div><div class="ni-lk">${igLk(p)} 個讚</div><div class="ni-cp"><b>${esc(who)}</b> ${esc(p.caption||'')}</div>${full?p.comments.map(c=>`<div class="ni-cm"><b>${esc(c.who||P.ig.handle)}</b> ${esc(c.text)}</div>`).join(''):(p.comments.length?`<div class="ni-all" data-op="${i}">查看全部 ${p.comments.length} 則留言</div>`:'')}<time>${esc(p.time||'')}</time></article>`}
 function igHead(u,n){return`<span class="ni-ring">${igAva(u.avatar,u.name||u.handle)}</span><div class="ni-st"><div><b>${n}</b><span>貼文</span></div><div><b>${esc(u.followers||0)}</b><span>粉絲</span></div><div class="fol"><b>${esc(u.following||0)}</b><span>追蹤中</span></div></div>`}
-function igGoUser(handle){const u=(P.ig.followingList||[]).findIndex(x=>x.handle===handle);if(u<0)return;igUp=u;igView='user';igSel=null;renderIg()}
+const I0=()=>P.ig;function igGoUser(handle){const u=(P.ig.followingList||[]).findIndex(x=>x.handle===handle);if(u<0||I0().followingList[u].open===false)return;igUp=u;igView='user';igSel=null;renderIg()}
 function renderIg(){
   const I=P.ig,L=igList();I.followingList=I.followingList||[];
   const sh=(id,on)=>{$(id).hidden=!on};
@@ -1449,8 +1450,8 @@ function renderIg(){
     $('#niPostBody [data-lk]').onclick=()=>igLike(det.p);
     $('#niPostBody [data-op]').onclick=()=>$('#niCmT').focus();
     $('#niPostBody [data-u]').onclick=()=>{if(!det.own){igSel=null;igGoUser(det.who)}}}
-  $('#niFolBody').innerHTML=I.followingList.map((u,i)=>`<div class="ni-dm" data-u="${i}">${igAva(u.avatar,u.name||u.handle)}<div><b>${esc(u.handle)}</b><span>${esc(u.name||'')}</span></div></div>`).join('')||'<div class="k-empty">沒有追蹤對象</div>';
-  $$('#niFolBody [data-u]').forEach(r=>r.onclick=()=>{igUp=+r.dataset.u;igView='user';renderIg();$('#niUsr .ni-scr').scrollTop=0});
+  $('#niFolBody').innerHTML=I.followingList.map((u,i)=>`<div class="ni-dm${u.open===false?' nolink':''}" data-u="${i}">${igAva(u.avatar,u.name||u.handle)}<div><b>${esc(u.handle)}</b><span>${esc(u.name||'')}</span></div></div>`).join('')||'<div class="k-empty">沒有追蹤對象</div>';
+  $$('#niFolBody [data-u]:not(.nolink)').forEach(r=>r.onclick=()=>{igUp=+r.dataset.u;igView='user';renderIg();$('#niUsr .ni-scr').scrollTop=0});
   if(usr){const u=I.followingList[igUp];u.posts=u.posts||[];
     $('#niUsrName').textContent=u.handle;$('#niUHead').innerHTML=igHead(u,u.posts.length);$('#niUBio').innerHTML=`<b>${esc(u.name||'')}</b><div>${esc(u.bio||'').replace(/\n/g,'<br>')}</div>`;
     $('#niUGrid').innerHTML=u.posts.map(igTile).join('');
@@ -2004,8 +2005,8 @@ if(!STANDALONE)(function(){
     I.feed=I.feed||[];
     listEd(p,I.feed,()=>({who:'',avatar:null,img:null,caption:'',likes:0,time:'1小時前',comments:[]}),x=>x.who,(c,x)=>{
       const r=el('div',{className:'r2'});r.append(text('帳號',x,'who'),text('時間',x,'time'));c.append(r,image('頭像',x,'avatar',160),image('照片',x,'img',900),text('說明文字',x,'caption',{area:1}),text('讚數',x,'likes',{type:'number'}));x.comments=x.comments||[];c.append(miniH('留言'));listEd(c,x.comments,()=>({who:'',text:''}),m=>m.who,(cc,m)=>{const q=el('div',{className:'r2'});q.append(text('帳號',m,'who'),text('內容',m,'text'));cc.append(q)},'＋ 新增留言')},'＋ 新增動態');
-    p.append(el('h3',{style:'margin:18px 0 0;font-size:14px'},'追蹤中的人（玩家點「追蹤中」可進去看他們的個人檔案）'));I.followingList=I.followingList||[];
-    listEd(p,I.followingList,()=>({handle:'new_user',name:'',avatar:null,bio:'',followers:'0',following:'0',posts:[]}),u=>u.handle,(c,u)=>{
+    p.append(el('h3',{style:'margin:18px 0 0;font-size:14px'},'追蹤中的人（可個別設定：能點進去看檔案／只顯示不能點）'));I.followingList=I.followingList||[];
+    listEd(p,I.followingList,()=>({handle:'new_user',name:'',avatar:null,bio:'',followers:'0',following:'0',open:true,posts:[]}),u=>u.handle+(u.open===false?'（僅顯示）':''),(c,u)=>{if(u.open===undefined)u.open=true;c.append(check('可點進去看他的個人檔案（取消勾選＝只顯示在名單、不能點）',u,'open'));
       const r=el('div',{className:'r2'});r.append(text('帳號',u,'handle'),text('名稱',u,'name'));c.append(r,image('大頭貼',u,'avatar',200),text('簡介',u,'bio',{area:1}));
       const r2=el('div',{className:'r2'});r2.append(text('粉絲數',u,'followers'),text('追蹤中',u,'following'));c.append(r2,miniH('他的貼文'));u.posts=u.posts||[];
       listEd(c,u.posts,()=>({img:null,caption:'',likes:0,time:'1天前',comments:[]}),x=>x.caption,(cc,x)=>{cc.append(image('照片',x,'img',900),text('說明文字',x,'caption',{area:1}));const q=el('div',{className:'r2'});q.append(text('讚數',x,'likes',{type:'number'}),text('時間',x,'time'));cc.append(q);x.comments=x.comments||[];listEd(cc,x.comments,()=>({who:'',text:''}),m=>m.who,(c3,m)=>{const z=el('div',{className:'r2'});z.append(text('帳號',m,'who'),text('內容',m,'text'));c3.append(z)},'＋ 新增留言')},'＋ 新增貼文')},'＋ 新增追蹤對象');
