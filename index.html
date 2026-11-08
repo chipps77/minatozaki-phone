@@ -989,8 +989,8 @@ function relock(){
 })();
 function renderLockNotifs(){
   const out=[];
-  P.kakao.rooms.forEach((r,i)=>{
-    if(!r.unread)return;const m=lastMsg(r);
+  P.kakao.rooms.map((r,i)=>[r,i]).filter(([r])=>r.unread).sort((a,b)=>sortKey(lastMsg(b[0])||{}).localeCompare(sortKey(lastMsg(a[0])||{}))).forEach(([r,i])=>{
+    const m=lastMsg(r);
     out.push(`<div class="n" data-room="${i}"><span class="nav"><span class="nph">${Y('',r.avatar)}</span>${TK}</span><span class="nt"><b>${esc(r.name)}</b><span>${esc(m?(m.img?'傳送了一張照片':m.text):'新訊息')}</span></span><time>${m?'剛剛':''}</time></div>`);
   });
   $('#lNotif').innerHTML=out.join('');
@@ -1537,7 +1537,7 @@ function kKeys(ch){
 }
 function kPress(k){const e=document.querySelector('#kb [data-k="'+k+'"]');if(!e)return;e.classList.add('dn');setTimeout(()=>e.classList.remove('dn'),90)}
 function kScript(i){const r=P.kakao.rooms[i];return r&&(r.script||[])[kScr[i]||0]}
-function kReady(i){const sc=kScript(i);return sc&&unlocked&&!kRun[i]&&flagOK(sc.wait)?sc:null}
+function kReady(i){const sc=kScript(i);return sc&&(unlocked||(sc.pre&&!sc.me))&&!kRun[i]&&flagOK(sc.wait)?sc:null} /* pre:true＝自動步驟可以在解鎖前就開始（鎖定畫面會跳通知） */
 function kInRoom(i){return curApp==='kakao'&&kRoomI===i&&$('#kRoom').classList.contains('open')}
 function kLocked(r){if(!r||FL.has('clear'))return false;return !!(r.lock||(r.script&&r.script.length))}
 function kLockUI(){if(kRoomI==null||kBusy||kPend||kArm!=null)return;const r=P.kakao.rooms[kRoomI],inp=$('#rText');if(!r)return;
@@ -1587,7 +1587,7 @@ function kDeliver(i,q){
   else r.msgs.push(shown={_rt:1,from:q.me?'me':'them',who:q.who||'',text:q.text||'',time:n.time,date:n.date});
   const inRoom=kInRoom(j);
   if(inRoom)renderRoom();
-  else if(shown&&shown.from==='them'){r.unread=(r.unread||0)+1;arrBanner('kakao',r.name,(r.group&&q.who?q.who+'：':'')+(q.text||''),arrGo('kakao',()=>openRoom(j)))}
+  else if(shown&&shown.from==='them'){r.unread=(r.unread||0)+1;if(mode!=='lock')arrBanner('kakao',r.name,(r.group&&q.who?q.who+'：':'')+(q.text||''),arrGo('kakao',()=>openRoom(j)))}
   else if(curApp==='kakao'&&kRoomI===j)renderRoom();
   if(curApp==='kakao')renderKakao();updBadge();renderLockNotifs();
   if(q.set)setFlag(q.set);
@@ -1601,7 +1601,6 @@ function kRunStep(i,sc){
     setTimeout(()=>{const x=kDeliver(i,q)||0;x?setTimeout(nx,x):nx()},d)};
   nx()}
 function storyTick(){
-  if(!unlocked)return;
   P.kakao.rooms.forEach((r,i)=>{const sc=kReady(i);if(!sc)return;
     if(sc.me){if(kInRoom(i)&&!kBusy&&!kPend&&kArm==null)kStart(i)}
     else{kRun[i]=true;setTimeout(()=>kRunStep(i,sc),(sc.delay!=null?+sc.delay:1.5)*1000)}});
@@ -1870,6 +1869,7 @@ function renderAll(){
 }
 window.__render=renderAll;
 renderAll();applyTheme();setTimeout(scaleIt,0);setTimeout(scaleIt,300);
+setTimeout(()=>{try{storyTick()}catch(e){}},300); /* 解鎖前就開始的劇情（pre） */
 
 /* ---------- EDITOR ---------- */
 if(!STANDALONE)(function(){
