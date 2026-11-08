@@ -1246,9 +1246,12 @@ function ringIncoming(){
   isl.classList.add('calling','ringing');$('#isCallT').textContent='來電中';
   clearTimeout(callTimer);callTimer=setTimeout(()=>{if(call&&call.state==='ring')finishCall(true)},30000);
 }
+/* 聯絡人：lock:"旗標"＝旗標達成前撥不出去；cases:[{wait:"旗標",lines:[...]}]＝依劇情進度換通話內容（由上往下取第一個符合的） */
+function callLinesOf(c){if(!c)return[];const k=(c.cases||[]).find(x=>x&&flagOK(x.wait));return((k&&k.lines)||c.callLines||[]).filter(Boolean)}
 function startCall(name){
   if(call)return;const c=contactBy(name);
-  setCall(name,'dial',c&&c.callLines?c.callLines.filter(Boolean):[]);
+  if(c&&c.lock&&!flagOK(c.lock))return;
+  setCall(name,'dial',callLinesOf(c));
   clearTimeout(callTimer);
   callTimer=setTimeout(()=>{ if(!call)return; if(call.lines.length)connect(); else{$('#coSt').textContent='無人接聽';callTimer=setTimeout(()=>finishCall(false,true),1800)} },1800);
 }
@@ -1837,6 +1840,12 @@ function evDeliver(a){
       B.msgs.push({_rt:1,from:q.from||'artist',who:q.who||'',text:q.text||'',quote:q.quote||'',quoteMe:!!q.quoteMe,time:pad(d.getHours())+':'+pad(d.getMinutes()),date:ymd(d)});
       if(curApp==='bubble')renderBubble();
       if(qi===0&&curApp!=='bubble')arrBanner('bubble',a.title||B.artist,q.text||'',arrGo('bubble'))},t)});
+  }else if(act==='igpost'){ /* IG 新貼文：user＝追蹤中的帳號（留空＝自己），caption、likes、comments */
+    const I=P.ig;if(!I)return;const u=(I.followingList||[]).find(x=>x.handle===a.user);
+    const post={_rt:1,img:a.img||null,caption:a.caption||'',likes:+a.likes||0,time:'剛剛',comments:(a.comments||[]).map(c=>Object.assign({},c))};
+    if(u){(u.posts=u.posts||[]).unshift(post);(I.feed=I.feed||[]).unshift(Object.assign({},post,{who:u.handle,avatar:u.avatar||null}))}else(I.posts=I.posts||[]).unshift(post);
+    if(curApp==='ig')renderIg();
+    arrBanner('ig','Instagram',(u?u.handle:I.handle)+' 分享了一則貼文',arrGo('ig'));
   }else if(act==='notify'){
     const nm=(APPLIST.find(x=>x[0]===app)||[app,''])[1];
     arrBanner(app,a.title||name||nm,a.text,arrGo(app));
@@ -2166,7 +2175,7 @@ if(!STANDALONE)(function(){
   function tEv(p){
     p.append(el('div',{className:'note'},'設定「玩家做了什麼事 → 過幾秒 → 發生什麼」。例如：解鎖後 20 秒阿哲傳訊息、玩家發文後有人回覆、搜尋某個詞跳出彩蛋、回信後收到新郵件、打開某個 App 就來電。每一條只會觸發一次。'));
     const WH=[['unlock','解鎖手機後'],['open','第一次打開某個 App'],['xpost','玩家在 X 發文後'],['mailsend','玩家寄出郵件後'],['search','玩家在 Safari 搜尋後'],['flag','劇情旗標達成後（例：call:芙蘿拉花藝）']];
-    const DO=[['msg','收到訊息（KakaoTalk／訊息）'],['notify','只跳通知'],['call','來電'],['xreply','有人回覆 X 貼文'],['mail','收到新郵件'],['bubble','bubble 新訊息（用 msgs 陣列）']];
+    const DO=[['msg','收到訊息（KakaoTalk／訊息）'],['notify','只跳通知'],['call','來電'],['xreply','有人回覆 X 貼文'],['mail','收到新郵件'],['bubble','bubble 新訊息（用 msgs 陣列）'],['igpost','IG 新貼文（user、caption）']];
     const AP=APPLIST.filter(a=>!['phone'].includes(a[0])).map(a=>[a[0],a[1]]);
     const dsel=(label,o,k,opts,draw)=>{const w=select(label,o,k,opts);const s=w.querySelector('select'),old=s.onchange;s.onchange=()=>{old();draw()};return w};
     listEd(p,EVS(),()=>({when:'unlock',delay:10,do:'msg',app:'kakao',room:'',who:'',text:''}),e=>{const w=(WH.find(x=>x[0]===e.when)||[0,''])[1];return w+'→'+(e.delay||0)+'秒→'+((DO.find(x=>x[0]===e.do)||[0,''])[1])+' '+((e.text||e.subject||e.name||'')+'').slice(0,10)},(c,e,i,draw)=>{
