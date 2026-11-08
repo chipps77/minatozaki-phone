@@ -1491,7 +1491,7 @@ function renderBubble(){
   $('#bbForm').onsubmit=e=>{e.preventDefault();const v=$('#bbText').value.trim();if(!v)return;const n=new Date;
     B.msgs.push({_rt:1,from:art?'artist':'me',who:B.nick,text:v,time:pad(n.getHours())+':'+pad(n.getMinutes()),date:ymd(n)});renderBubble();
     /* 彩蛋：訊息含關鍵字 → 藝人用「回覆給 我」的方式回覆（bubble.autoReplies:[{kw,text,delay}]） */
-    if(!art)(B.autoReplies||[]).forEach(a=>{if(a&&a.kw&&v.includes(a.kw))setTimeout(()=>{const d=new Date;B.msgs.push({_rt:1,from:'artist',text:a.text||'',quote:v,quoteMe:true,time:pad(d.getHours())+':'+pad(d.getMinutes()),date:ymd(d)});
+    if(!art)(B.autoReplies||[]).forEach(a=>{if(a&&a.kw&&String(a.kw).split(/[,，]/).map(k=>k.trim().toLowerCase()).filter(Boolean).some(k=>v.toLowerCase().includes(k)))setTimeout(()=>{const d=new Date;B.msgs.push({_rt:1,from:'artist',text:a.text||'',quote:v,quoteMe:true,time:pad(d.getHours())+':'+pad(d.getMinutes()),date:ymd(d)});
       if(curApp==='bubble')renderBubble();else arrBanner('bubble',B.artist,a.text||'',arrGo('bubble'))},(+a.delay||2)*1000)})};
 }
 HOOK.bubble=()=>{bbRoom=false;bbV='friends';renderBubble()};MODS.push(()=>{if(curApp==='bubble')renderBubble()});
