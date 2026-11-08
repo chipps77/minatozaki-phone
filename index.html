@@ -865,12 +865,12 @@ const agoLbl=(m,suf)=>m<1?'剛剛':m<60?Math.round(m)+'分鐘'+(suf||''):m<1440?
 const mailLbl=m=>{const d=agoDate(m),t=ymd(NOW0),y=ymd(new Date(NOW0.getTime()-864e5));return ymd(d)===t?pad(d.getHours())+':'+pad(d.getMinutes()):ymd(d)===y?'昨天':m<10080?'週'+WD[d.getDay()]:shortD(ymd(d))};
 function resolveTimes(){
   const clk=o=>{if(o&&isN(o.ago)){const d=agoDate(o.ago);o.date=ymd(d);o.time=pad(d.getHours())+':'+pad(d.getMinutes())}
-      else if(o&&isN(o.dayAgo)){const d=new Date(NOW0.getFullYear(),NOW0.getMonth(),NOW0.getDate()-o.dayAgo);o.date=ymd(d);o.time=o.at||o.time||'12:00'}};
+      else if(o&&isN(o.dayAgo)){const d=new Date(NOW0.getFullYear(),NOW0.getMonth(),NOW0.getDate()-o.dayAgo);o.date=ymd(d);if(o.at){o.time=o.at;delete o.at}if(!o.time)o.time='12:00'}};
   try{
     ((P.kakao&&P.kakao.rooms)||[]).forEach(r=>(r.msgs||[]).forEach(clk));
     ((P.msgs&&P.msgs.threads)||[]).forEach(t=>(t.msgs||[]).forEach(clk));
     ((P.bubble&&P.bubble.msgs)||[]).forEach(m=>{if(isN(m.ago)){const d=agoDate(m.ago);m.date=ymd(d);m.time=pad(d.getHours())+':'+pad(d.getMinutes())}
-      else if(isN(m.dayAgo)){const d=new Date(NOW0.getFullYear(),NOW0.getMonth(),NOW0.getDate()-m.dayAgo);m.date=ymd(d);m.time=m.at||m.time||''}});
+      else if(isN(m.dayAgo)){const d=new Date(NOW0.getFullYear(),NOW0.getMonth(),NOW0.getDate()-m.dayAgo);m.date=ymd(d);if(m.at){m.time=m.at;delete m.at}}});
     const lbl=(o,suf)=>{if(o&&isN(o.ago))o.time=agoLbl(o.ago,suf)};
     ((P.x&&P.x.tweets)||[]).forEach(t=>{lbl(t);(t.replyList||[]).forEach(r=>lbl(r))});
     ((P.x&&P.x.dms)||[]).forEach(d=>(d.msgs||[]).forEach(m=>{if(isN(m.ago)){const x=agoDate(m.ago);m.time=pad(x.getHours())+':'+pad(x.getMinutes())}}));
@@ -2040,7 +2040,7 @@ if(!STANDALONE)(function(){
         const who=el('input',{type:'text',placeholder:'群組裡的發言者名字（可空）',value:m.who||''});who.oninput=()=>{m.who=who.value;touch()};
         const t=el('textarea',{placeholder:'訊息內容（傳照片就留空）'});t.value=m.text||'';t.oninput=()=>{m.text=t.value;touch()};
         const rr=el('div',{className:'r2'});
-        const d=el('input',{type:'text',value:m.date||'',placeholder:'2026-10-24'});d.oninput=()=>{m.date=d.value;touch()};
+        const d=el('input',{type:'text',value:m.date||'',placeholder:'2026-10-24'});d.oninput=()=>{m.date=d.value;if(isN(m.dayAgo)&&/^\d{4}-\d{1,2}-\d{1,2}$/.test(d.value)){const t0=new Date(NOW0.getFullYear(),NOW0.getMonth(),NOW0.getDate());m.dayAgo=Math.max(0,Math.round((t0-parseD(d.value))/864e5))}touch()};
         const tm=el('input',{type:'text',value:m.time||'',placeholder:'23:41'});tm.oninput=()=>{m.time=tm.value;touch()};rr.append(d,tm);
         c2.append(who,t,rr,agoF('或：幾分鐘前（填了就依玩家打開的真實時間換算，上面日期時間作廢；60＝1小時、1440＝1天）',m),image('照片',m,'img',900));
         row.append(s,c2,moveDel(r.msgs,mi,mdraw));ml.append(row)})};
@@ -2059,7 +2059,7 @@ if(!STANDALONE)(function(){
       const ml=el('div');const mdraw=()=>{ml.innerHTML='';t.msgs.forEach((m,mi)=>{
         const row=el('div',{className:'msgrow'});const s=el('select');[['them','對方'],['me','我']].forEach(([v,x])=>s.append(el('option',{value:v,textContent:x,selected:m.from===v})));s.onchange=()=>{m.from=s.value;touch()};
         const c2=el('div',{className:'c2'});const tx=el('textarea');tx.value=m.text||'';tx.oninput=()=>{m.text=tx.value;touch()};
-        const rr=el('div',{className:'r2'});const d=el('input',{type:'text',value:m.date||'',placeholder:'2026-10-24'});d.oninput=()=>{m.date=d.value;touch()};const tm=el('input',{type:'text',value:m.time||'',placeholder:'23:41'});tm.oninput=()=>{m.time=tm.value;touch()};rr.append(d,tm);
+        const rr=el('div',{className:'r2'});const d=el('input',{type:'text',value:m.date||'',placeholder:'2026-10-24'});d.oninput=()=>{m.date=d.value;if(isN(m.dayAgo)&&/^\d{4}-\d{1,2}-\d{1,2}$/.test(d.value)){const t0=new Date(NOW0.getFullYear(),NOW0.getMonth(),NOW0.getDate());m.dayAgo=Math.max(0,Math.round((t0-parseD(d.value))/864e5))}touch()};const tm=el('input',{type:'text',value:m.time||'',placeholder:'23:41'});tm.oninput=()=>{m.time=tm.value;touch()};rr.append(d,tm);
         c2.append(tx,rr,agoF('或：幾分鐘前（填了就依真實時間換算）',m));row.append(s,c2,moveDel(t.msgs,mi,mdraw));ml.append(row)})};
       mdraw();c.append(ml,addBtn('＋ 新增一則',()=>{t.msgs.push(Object.assign({from:'them',text:''},now()));touch();mdraw()}));list.append(c)})};
     const list=el('div');draw();p.append(list,addBtn('＋ 新增對話',()=>{P.msgs.threads.push({name:'新對話',open:true,msgs:[]});touch();draw()}));
@@ -2150,6 +2150,7 @@ if(!STANDALONE)(function(){
     p.append(miniH('「翻譯」欄會在原文下方用虛線隔開顯示（像韓文＋中文）。訂閱者模式只會看到藝人和「我」；藝人模式會看到全部粉絲回覆。'));
     listEd(p,B.msgs,()=>({from:'artist',who:'',text:'',tr:'',time:now().time}),m=>m.text,(c,m)=>{
       const a=el('div',{className:'r2'});a.append(select('誰說的',m,'from',[['artist','藝人'],['fan','其他粉絲'],['me','我']]),text('時間',m,'time',{ph:'23:02'}));
+      if(isN(m.dayAgo))c.append(text('幾天前（0＝今天）',m,'dayAgo',{type:'number'}));
       c.append(a,text('粉絲名字（粉絲／我）',m,'who'),text('原文',m,'text',{area:1}),text('翻譯（可空）',m,'tr',{area:1}),text('回覆的粉絲訊息（藝人訊息才有；可空）',m,'quote',{area:1}),check('被回覆的是我（顯示「回覆給 我的暱稱」）',m,'quoteMe'),image('圖片',m,'img',900))},'＋ 新增一則');
   }
   function tIg(p){
