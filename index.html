@@ -1788,7 +1788,9 @@ HOOK.spot=renderSpot;MODS.push(()=>{renderSpot()});
 function renderCal(){
   const C=P.cal||(P.cal={start:'2026-10',months:3,events:[]});
   const [y0,m0]=String(C.start||'2026-10').split('-').map(Number),cnt=Math.max(1,Math.min(12,+C.months||3)),T=$('#calScroll'),now=new Date,tk=ymd(now);
-  const ev={},bars=[];(C.events||[]).forEach(e=>{if((+e.n||1)>1)bars.push(e);else(ev[e.date]=ev[e.date]||[]).push(e)});
+  const ev={},bars=[];(C.events||[]).forEach(e=>{if((+e.n||1)>1)bars.push(e);else if(!e.md)(ev[e.date]=ev[e.date]||[]).push(e)});
+  /* 每年重複的行程（生日、紀念日）：md:"11-09" */
+  (C.events||[]).filter(e=>e.md).forEach(e=>{for(let q=0;q<cnt;q++){const d0=new Date(y0,m0-1+q,1);if(String(d0.getMonth()+1).padStart(2,'0')===String(e.md).split('-')[0]){const k=d0.getFullYear()+'-'+e.md;(ev[k]=ev[k]||[]).push(e)}}});
   let o='';
   for(let q=0;q<cnt;q++){
     const d0=new Date(y0,m0-1+q,1),y=d0.getFullYear(),m=d0.getMonth()+1,first=d0.getDay(),days=new Date(y,m,0).getDate(),cur=now.getFullYear()===y&&now.getMonth()+1===m;
@@ -2330,7 +2332,7 @@ if(!STANDALONE)(function(){
   function tCal(p){
     P.cal=P.cal||{start:'2026-10',months:3,events:[]};const C=P.cal;
     const r=el('div',{className:'r2'});r.append(text('起始月份（例：2026-10）',C,'start'),agoF('或：相對本月（-1＝上個月開始、0＝本月開始，依玩家真實日期換算）',C,'startOff','留空＝用起始月份'),text('顯示幾個月',C,'months',{type:'number'}));p.append(r,miniH('事件日期格式 2026-10-24。「連續天數」大於 1 會畫成橫條。'));
-    listEd(p,C.events,()=>({date:'',t:'',c:'b',n:1,ic:false}),x=>x.date+' '+x.t,(c,x)=>{const a=el('div',{className:'r2'});a.append(text('日期',x,'date',{ph:'2026-10-24'}),text('標題',x,'t'),agoF('或：距離今天幾天（0＝今天、2＝後天、-1＝昨天；依玩家真實日期換算）',x,'off','留空＝用日期'));const b=el('div',{className:'r2'});b.append(select('顏色',x,'c',[['b','藍'],['g','綠'],['p','紫']]),text('連續天數',x,'n',{type:'number'}));c.append(a,b,check('標題前加圓點',x,'ic'))},'＋ 新增行程');
+    listEd(p,C.events,()=>({date:'',t:'',c:'b',n:1,ic:false}),x=>(x.md?'每年 '+x.md:x.date)+' '+x.t,(c,x)=>{const a=el('div',{className:'r2'});a.append(text('日期',x,'date',{ph:'2026-10-24'}),text('標題',x,'t'),text('或：每年重複（月-日，例 11-09，生日用）',x,'md',{ph:'11-09'}),agoF('或：距離今天幾天（0＝今天、2＝後天、-1＝昨天；依玩家真實日期換算）',x,'off','留空＝用日期'));const b=el('div',{className:'r2'});b.append(select('顏色',x,'c',[['b','藍'],['g','綠'],['p','紫']]),text('連續天數',x,'n',{type:'number'}));c.append(a,b,check('標題前加圓點',x,'ic'))},'＋ 新增行程');
   }
   function tClock(p){
     P.clock=P.clock||{cities:[],alarms:[]};const C=P.clock;
