@@ -1060,7 +1060,7 @@ function openApp(id,ic){
 function closeApp(instant){
   if(!curApp)return;
   const el=$(`[data-app="${curApp}"]`),ic=curIcon,done=()=>{el.hidden=true};
-  if(curApp==='phone')endCall();
+  if(curApp==='phone')endCall();if(curApp==='voice'){voPlay=false;voAu.pause()}
   if(!instant&&ic){
     const i=ic.querySelector('img,.cal').getBoundingClientRect(),r=G.getBoundingClientRect(),s=r.width/393;
     const cx=(i.left+i.width/2-r.left)/s,cy=(i.top+i.height/2-r.top)/s;
@@ -1816,19 +1816,29 @@ HOOK.clock=renderClock;MODS.push(()=>{if(curApp==='clock')renderClock()});
 
 /* ================= Voice memos ================= */
 let voI=null,voPlay=false,voT=0,voRec=false,voRt=0;
+/* 語音備忘錄可放 mp3（memos[].audio）：有音檔就真的播放，進度跟著音檔走 */
+const voAu=new Audio();voAu.preload='auto';let voSrc='';
+function voSync(){const m=(P.voice&&P.voice.memos||[])[voI];
+  if(!m||!m.audio){if(voSrc){voAu.pause();voSrc=''}return}
+  if(voSrc!==m.audio){voAu.src=m.audio;voSrc=m.audio;try{voAu.currentTime=voT||0}catch(e){}}
+  if(voPlay){try{if(typeof spPlay!=='undefined'&&spPlay){spPlay=false;spSync&&spSync();renderSpot&&renderSpot()}}catch(e){}const pr=voAu.play();if(pr&&pr.catch)pr.catch(()=>{})}else voAu.pause()}
+voAu.addEventListener('loadedmetadata',()=>{const m=(P.voice&&P.voice.memos||[])[voI];if(m&&m.audio===voSrc&&isFinite(voAu.duration)&&voAu.duration>0){m.dur=Math.round(voAu.duration);if(curApp==='voice')renderVoice()}});
+voAu.addEventListener('ended',()=>{voPlay=false;const m=(P.voice&&P.voice.memos||[])[voI];voT=m?m.dur:0;renderVoice()});
 function renderVoice(){
   const V=P.voice||(P.voice={memos:[]}),M=V.memos||[];
   $('#voList').innerHTML=M.map((m,i)=>{
     const open=voI===i;
     return`<div class="vo-r${open?' on':''}" data-i="${i}"><div class="t1"><b>${esc(m.title)}</b><time>${esc(m.date||'')}</time></div><div class="t2">${open?'':''}<span>${fmtDur(m.dur)}</span></div>${open?`<div class="vo-p"><div class="bar" id="voBar"><i style="width:${m.dur?voT/m.dur*100:0}%"></i></div><div class="tt"><span id="voCur">${fmtDur(voT)}</span><span>-${fmtDur(Math.max(0,m.dur-voT))}</span></div><div class="cc"><button id="voPP">${voPlay?'<svg width="30" height="30" viewBox="0 0 24 24" fill="#000"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>':'<svg width="30" height="30" viewBox="0 0 24 24" fill="#000"><path d="M8 5v14l11-7z"/></svg>'}</button></div>${m.text?`<div class="tx">${esc(m.text).replace(/\n/g,'<br>')}</div>`:''}</div>`:''}</div>`}).join('')||'<div class="k-empty">沒有錄音</div>';
-  $$('#voList .vo-r').forEach(r=>r.onclick=e=>{if(e.target.closest('.vo-p'))return;const i=+r.dataset.i;voI=voI===i?null:i;voT=0;voPlay=false;renderVoice()});
-  const pp=$('#voPP');if(pp)pp.onclick=()=>{voPlay=!voPlay;if(voPlay&&voT>=M[voI].dur)voT=0;renderVoice()};
+  $$('#voList .vo-r').forEach(r=>r.onclick=e=>{if(e.target.closest('.vo-p'))return;const i=+r.dataset.i;voI=voI===i?null:i;voT=0;voPlay=false;voSrc&&(voAu.pause(),voSrc='');renderVoice()});
+  const pp=$('#voPP');if(pp)pp.onclick=()=>{voPlay=!voPlay;if(voPlay&&voT>=M[voI].dur){voT=0;try{voAu.currentTime=0}catch(e){}}renderVoice()};
+  voSync();
 }
 const fmtDur=s=>Math.floor((s||0)/60)+':'+pad(Math.floor((s||0)%60));
 setInterval(()=>{
+  if(voPlay&&voI!=null&&P.voice.memos[voI]&&P.voice.memos[voI].audio){const m=P.voice.memos[voI];voT=Math.floor(voAu.currentTime||0);const b=$('#voBar i');if(b&&m.dur)b.style.width=Math.min(100,voT/m.dur*100)+'%';const c=$('#voCur');if(c)c.textContent=fmtDur(voT);return}
   if(voPlay&&voI!=null){const m=P.voice.memos[voI];voT++;if(!m||voT>=m.dur){voPlay=false;voT=m?m.dur:0;renderVoice()}else{const b=$('#voBar i');if(b)b.style.width=voT/m.dur*100+'%';const c=$('#voCur');if(c)c.textContent=fmtDur(voT)}}
 },1000);
-HOOK.voice=()=>{voI=null;voPlay=false;renderVoice()};MODS.push(()=>{if(curApp==='voice')renderVoice()});
+HOOK.voice=()=>{voI=null;voPlay=false;voAu.pause();voSrc='';renderVoice()};MODS.push(()=>{if(curApp==='voice')renderVoice()});
 
 /* ================= 設定（純展示，不能點進去） ================= */
 function renderSettings(){
@@ -2295,7 +2305,7 @@ if(!STANDALONE)(function(){
   function tVoice(p){
     P.voice=P.voice||{memos:[]};
     p.append(miniH('玩家只能點開錄音「播放」（會跑進度條並顯示文字稿），不能自己錄音。'));
-    listEd(p,P.voice.memos,()=>({title:'新錄音',date:'今天',dur:30,text:''}),m=>m.title,(c,m)=>{const r=el('div',{className:'r2'});r.append(text('標題',m,'title'),text('日期顯示',m,'date'));c.append(r,text('長度（秒）',m,'dur',{type:'number'}),text('文字稿（玩家播放時顯示）',m,'text',{area:1}))},'＋ 新增錄音');
+    listEd(p,P.voice.memos,()=>({title:'新錄音',date:'今天',dur:30,text:''}),m=>m.title,(c,m)=>{const r=el('div',{className:'r2'});r.append(text('標題',m,'title'),text('日期顯示',m,'date'));c.append(r,text('長度（秒）（上傳 mp3 會自動填）',m,'dur',{type:'number'}),audio('音檔 mp3（選填，上傳後玩家播放會真的出聲）',m,'audio',n=>{m.dur=n}),text('文字稿（玩家播放時顯示）',m,'text',{area:1}))},'＋ 新增錄音');
   }
 
   const TABS=[['meta','基本・鎖屏',tMeta],['kakao','KakaoTalk',tKakao],['msgs','訊息',tMsgs],['ev','事件・劇情觸發',tEv],['phone','電話',tPhone],['x','X',tX],['bubble','Bubble',tBubble],['spot','Spotify',tSpot],['camera','相機',tCamera],['cal','日曆',tCal],['clock','時鐘',tClock],['voice','語音備忘錄',tVoice],['ig','Instagram',tIg],['mail','郵件',tMail],['safari','Safari',tSafari],['notes','備忘錄',tNotes],['photos','相簿',tPhotos],['export','匯出・備份',tExport2]];
