@@ -1265,7 +1265,7 @@ function connect(){
   tick();
   const next=()=>{ if(!call||call.state!=='in')return;
     if(call.idx<call.lines.length){const d=document.createElement('div');d.className='co-line';d.textContent=call.lines[call.idx++];coCap.append(d);coCap.scrollTop=coCap.scrollHeight;call.lt=setTimeout(next,Math.max(1800,Math.min(4200,d.textContent.length*160)))}
-    else call.lt=setTimeout(()=>{if(call&&call.state==='in'){const d=document.createElement('div');d.className='co-line end';d.textContent='（對方掛斷了）';coCap.append(d);setTimeout(()=>finishCall(false),1400)}},2200)};
+    /* 說完不自動掛斷，通話一直持續到玩家自己按掛斷 */};
   call.lt=setTimeout(next,900);
 }
 function finishCall(missed,silent){
