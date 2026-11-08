@@ -1598,10 +1598,10 @@ function kDeliver(i,q){
     if(idx.length){idx.forEach(m=>{r.msgs[m]._hid=1});const f=Math.min(...idx),o=r.msgs[f];
       r.msgs.splice(f,0,{_rt:1,from:'sys',text:q.text||((who||r.name)+'已收回訊息'),date:o.date,time:o.time})}}
   else if(q.sys)r.msgs.push({_rt:1,from:'sys',text:q.text||'',time:n.time,date:n.date});
-  else r.msgs.push(shown={_rt:1,from:q.me?'me':'them',who:q.who||'',text:q.text||'',time:n.time,date:n.date});
+  else{shown={_rt:1,from:q.me?'me':'them',who:q.who||'',text:q.text||'',time:n.time,date:n.date};if(q.img)shown.img=q.img;r.msgs.push(shown)}
   const inRoom=kInRoom(j);
   if(inRoom)renderRoom();
-  else if(shown&&shown.from==='them'){r.unread=(r.unread||0)+1;if(mode!=='lock')arrBanner('kakao',r.name,(r.group&&q.who?q.who+'：':'')+(q.text||''),arrGo('kakao',()=>openRoom(j)))}
+  else if(shown&&shown.from==='them'){r.unread=(r.unread||0)+1;if(mode!=='lock')arrBanner('kakao',r.name,(r.group&&q.who?q.who+'：':'')+(q.img?'傳送了一張照片':(q.text||'')),arrGo('kakao',()=>openRoom(j)))}
   else if(curApp==='kakao'&&kRoomI===j)renderRoom();
   if(curApp==='kakao')renderKakao();updBadge();renderLockNotifs();
   if(q.set)setFlag(q.set);
@@ -2047,7 +2047,7 @@ if(!STANDALONE)(function(){
       mdraw();c.append(ml,addBtn('＋ 新增一則訊息',()=>{const l=lastMsg(r)||now();r.msgs.push({from:'them',text:'',time:l.time||now().time,date:l.date||now().date});touch();mdraw()}));
       c.append(el('div',{className:'note'},'🎬 劇本打字：玩家進入這個聊天室時，我方要說的話會像真人打字一樣出現在輸入框，等玩家按「發送」後，對方依序回覆；再下一句劇本接著出現。'));
       r.script=r.script||[];
-      listEd(c,r.script,()=>({me:'',then:[]}),s=>s.me,(cc,s)=>{cc.append(text('我方要打的字',s,'me',{area:1}));s.then=s.then||[];cc.append(miniH('對方的回覆（依序出現）'));listEd(cc,s.then,()=>({text:'',who:''}),q=>q.text,(c3,q)=>{c3.append(text('內容',q,'text',{area:1}),text('發言者（群組才需要，可空）',q,'who'))},'＋ 新增回覆')},'＋ 新增劇本一句');
+      listEd(c,r.script,()=>({me:'',then:[]}),s=>s.me,(cc,s)=>{cc.append(text('我方要打的字',s,'me',{area:1}));s.then=s.then||[];cc.append(miniH('對方的回覆（依序出現）'));listEd(cc,s.then,()=>({text:'',who:''}),q=>q.text,(c3,q)=>{c3.append(text('內容',q,'text',{area:1}),text('發言者（群組才需要，可空）',q,'who'),image('照片（有放就顯示照片）',q,'img',900))},'＋ 新增回覆')},'＋ 新增劇本一句');
       list.append(c)})};
     const list=el('div');draw();p.append(list,addBtn('＋ 新增聊天室',()=>{P.kakao.rooms.push({name:'新朋友',group:false,members:0,pinned:false,unread:0,avatar:null,msgs:[]});touch();draw()}));
   }
@@ -2187,6 +2187,7 @@ if(!STANDALONE)(function(){
       if(e.do==='msg'){c.append(select('哪個 App',e,'app',[['kakao','KakaoTalk'],['msgs','訊息']]),text('聊天室／對象名稱（跟 App 裡一樣才會進同一間；沒有就自動新增）',e,'room'),text('群組時的發話者（選填）',e,'who'),text('訊息內容',e,'text',{area:1}))}
       else if(e.do==='notify'){c.append(select('哪個 App 的通知',e,'app',AP),text('標題',e,'title'),text('內容',e,'text',{area:1}))}
       else if(e.do==='call'){c.append(text('來電者名字',e,'name'),linesField('接聽後的通話內容（每行一句）',e,'lines'),text('沒接時留下的簡訊（選填）',e,'leave',{area:1}))}
+      else if(e.do==='igpost'){c.append(text('追蹤中的帳號（留空＝自己）',e,'user'),text('說明文字',e,'caption',{area:1}),image('照片',e,'img',900))}
       else if(e.do==='xreply'){const r=el('div',{className:'r2'});r.append(text('回覆者名稱',e,'who'),text('帳號（不含 @）',e,'handle'));c.append(r,text('回覆內容',e,'text',{area:1}),text('回覆哪一則貼文（0＝最新一則；玩家剛發的文就是 0）',e,'tweet',{type:'number'}))}
       else if(e.do==='mail'){const r=el('div',{className:'r2'});r.append(text('寄件人',e,'from'),text('主旨',e,'subject'));c.append(r,text('內容',e,'body',{area:1}))}
     },'＋ 新增一個事件');
