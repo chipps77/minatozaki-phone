@@ -1919,7 +1919,8 @@ function evDeliver(a){
     const nm=(APPLIST.find(x=>x[0]===app)||[app,''])[1];
     arrBanner(app,a.title||name||nm,a.text,arrGo(app));
   }else if(act==='call'){
-    if(call)return;setCall(a.name||'未知號碼','ring',(a.lines||[]).filter(Boolean),a.leave);call.noAnswer=!!a.noAnswer;$('#coAcc').classList.toggle('dis',!!a.noAnswer);
+    if(call){setTimeout(()=>evDeliver(a),20000);return} /* 正在通話中就晚一點再打來 */
+    setCall(a.name||'未知號碼','ring',(a.lines||[]).filter(Boolean),a.leave);call.noAnswer=!!a.noAnswer;$('#coAcc').classList.toggle('dis',!!a.noAnswer);
     isl.classList.add('calling','ringing');$('#isCallT').textContent='來電中';
     clearTimeout(callTimer);callTimer=setTimeout(()=>{if(call&&call.state==='ring')finishCall(true)},(+a.ring||30)*1000);
   }else if(act==='xreply'){
