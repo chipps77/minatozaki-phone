@@ -1354,9 +1354,10 @@ function sfListHtml(q){const L=sfFindAll(q),host=u=>String(u||'').replace(/^http
 function renderSafari(){
   const S=P.safari;$('#sfStart').hidden=sfPage!=null;$('#sfPage').hidden=sfPage==null;
   $('#sfFav').innerHTML=(S.bookmarks||[]).map((b,i)=>`<button class="sf-bm" data-b="${i}"><span style="background:${BMC[i%BMC.length]}">${esc(initial(b.title))}</span>${esc(b.title)}</button>`).join('');
-  $('#sfHist').innerHTML=(S.history||[]).length?`<h3>最近搜尋</h3><div class="sf-hl">`+(S.history).map((q,i)=>`<div class="sf-h" data-h="${i}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>${esc(q)}</div>`).join('')+'</div>':'';
+  const HL=sfHistRT.concat((S.history||[]).filter(h=>!sfHistRT.includes(h)));
+  $('#sfHist').innerHTML=HL.length?`<h3>最近搜尋</h3><div class="sf-hl">`+HL.map((q,i)=>`<div class="sf-h" data-h="${i}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>${esc(q)}</div>`).join('')+'</div>':'';
   $$('#sfFav [data-b]').forEach(b=>b.onclick=()=>{const bm=S.bookmarks[+b.dataset.b];openSf(sfFind(bm.title)||sfFind(bm.url),bm.title)});
-  $$('#sfHist [data-h]').forEach(b=>b.onclick=()=>{const q=S.history[+b.dataset.h];$('#sfQ').value=q;sfSearch(q)});
+  $$('#sfHist [data-h]').forEach(b=>b.onclick=()=>{const q=HL[+b.dataset.h];$('#sfQ').value=q;sfSearch(q)});
   if(sfPage&&sfPage.list){$('#sfUrl').textContent=sfPage.q;$('#sfPageBody').innerHTML=sfListHtml(sfPage.q);
     const L=sfFindAll(sfPage.q);$$('#sfPageBody [data-r]').forEach(r=>r.onclick=()=>{sfPage=Object.assign({},L[+r.dataset.r],{from:sfPage.q});renderSafari();$('#sfPageBody').scrollTop=0})}
   else if(sfPage){$('#sfUrl').textContent=sfPage.url||'';$('#sfPageBody').innerHTML=sfPage.none?`<div class="sf-none"><h2>找不到「${esc(sfPage.q)}」的結果</h2><p>請檢查拼字，或試試其他關鍵字。</p></div>`:`${sfPage.from?`<div class="sf-back" id="sfBackRes">‹ 返回「${esc(sfPage.from)}」的搜尋結果</div>`:''}<div class="sf-site"><div class="u">${esc(sfPage.url||'')}</div><h1>${esc(sfPage.title)}</h1><div class="b">${esc(sfPage.body).replace(/\n/g,'<br>')}</div></div>`;
@@ -1364,7 +1365,7 @@ function renderSafari(){
   else $('#sfUrl').textContent='搜尋或輸入網站名稱';
 }
 function openSf(page,q){sfPage=page||{none:true,q:q||$('#sfQ').value,url:'搜尋'};if(page&&!(P.safari.history||[]).includes(q))void 0;renderSafari();$('#sfPageBody').scrollTop=0}
-function sfSearch(q){sfPage={list:true,q};renderSafari();$('#sfPageBody').scrollTop=0}
+const sfHistRT=[];function sfSearch(q){q=String(q||'').trim();if(q){const k=sfHistRT.indexOf(q);if(k>=0)sfHistRT.splice(k,1);sfHistRT.unshift(q)}sfPage={list:true,q};renderSafari();$('#sfPageBody').scrollTop=0}
 $('#sfForm').addEventListener('submit',e=>{e.preventDefault();const q=$('#sfQ').value.trim();if(!q)return;$('#sfQ').blur();sfSearch(q);fireEv('search',{q})});
 {const bb=$$('.sf-ic span')[0];if(bb){bb.addEventListener('click',()=>{if(sfPage&&!sfPage.list&&sfPage.from)sfSearch(sfPage.from);else if(sfPage){sfPage=null;$('#sfQ').value='';renderSafari()}})}}
 $('#sfHome').onclick=()=>{sfPage=null;$('#sfQ').value='';renderSafari()};
@@ -1423,8 +1424,8 @@ function renderX(){
   if(xV==='dm'){const d=X.dms[xDi],b=$('#xDmB');b.scrollTop=b.scrollHeight;
     $('#xDmF').onsubmit=e=>{e.preventDefault();const v=$('#xDmT').value.trim();if(!v)return;const n=new Date;d.msgs.push({from:'me',text:v,time:pad(n.getHours())+':'+pad(n.getMinutes())});renderX()}}
   const fab=$('#xFab');if(fab)fab.onclick=()=>{xComp=true;renderX();$('#xText').focus()};
-  const ca=$('#xCancel');if(ca)ca.onclick=()=>{xComp=false;renderX();fireEv('xpost',{text:v})};
-  const po=$('#xPost');if(po)po.onclick=()=>{const v=$('#xText').value.trim();if(!v)return;X.tweets.unshift({text:v,time:'剛剛',replies:'',rts:'',likes:'',views:'1',replyList:[]});xComp=false;renderX()};
+  const ca=$('#xCancel');if(ca)ca.onclick=()=>{xComp=false;renderX()};
+  const po=$('#xPost');if(po)po.onclick=()=>{const v=$('#xText').value.trim();if(!v)return;X.tweets.unshift({_rt:1,text:v,time:'剛剛',replies:'',rts:'',likes:'',views:'1',replyList:[]});xComp=false;renderX();fireEv('xpost',{text:v})};
   $$('#xRoot .x-tabs b').forEach(b=>b.onclick=()=>{$$('#xRoot .x-tabs b').forEach(x=>x.classList.toggle('on',x===b))});
   const me=$('#xMe');if(me&&xV==='dms')me.onclick=()=>{xV='home';renderX()};
 }
@@ -1488,7 +1489,10 @@ function renderBubble(){
   const bd=$('#bbBody');bd.scrollTop=bd.scrollHeight;
   $('#bbBack').onclick=()=>{bbRoom=false;renderBubble()};
   $('#bbForm').onsubmit=e=>{e.preventDefault();const v=$('#bbText').value.trim();if(!v)return;const n=new Date;
-    B.msgs.push({from:art?'artist':'me',who:B.nick,text:v,time:pad(n.getHours())+':'+pad(n.getMinutes())});renderBubble()};
+    B.msgs.push({_rt:1,from:art?'artist':'me',who:B.nick,text:v,time:pad(n.getHours())+':'+pad(n.getMinutes()),date:ymd(n)});renderBubble();
+    /* 彩蛋：訊息含關鍵字 → 藝人用「回覆給 我」的方式回覆（bubble.autoReplies:[{kw,text,delay}]） */
+    if(!art)(B.autoReplies||[]).forEach(a=>{if(a&&a.kw&&v.includes(a.kw))setTimeout(()=>{const d=new Date;B.msgs.push({_rt:1,from:'artist',text:a.text||'',quote:v,quoteMe:true,time:pad(d.getHours())+':'+pad(d.getMinutes()),date:ymd(d)});
+      if(curApp==='bubble')renderBubble();else arrBanner('bubble',B.artist,a.text||'',arrGo('bubble'))},(+a.delay||2)*1000)})};
 }
 HOOK.bubble=()=>{bbRoom=false;bbV='friends';renderBubble()};MODS.push(()=>{if(curApp==='bubble')renderBubble()});
 
