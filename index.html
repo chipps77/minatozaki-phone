@@ -1876,10 +1876,10 @@ function evDeliver(a){
     const R=P.kakao.rooms;let i=R.findIndex(r=>r.name===name);
     if(i<0){R.push({_rt:1,name:name||'新訊息',group:false,members:0,pinned:false,unread:0,avatar:null,msgs:[]});i=R.length-1}
     const r=R[i],inRoom=curApp==='kakao'&&kRoomI===i;
-    r.msgs.push({_rt:1,from:'them',who:a.who||'',text:a.text||'',time:tm,date:dt});
-    if(inRoom)renderRoom();else r.unread=(r.unread||0)+1;
+    r.msgs.push({_rt:1,from:a.me?'me':'them',who:a.me?'':(a.who||''),text:a.text||'',time:tm,date:dt});
+    if(inRoom)renderRoom();else if(!a.me)r.unread=(r.unread||0)+1;
     renderKakao();updBadge();renderLockNotifs();
-    if(!inRoom)arrBanner('kakao',name||'KakaoTalk',a.text,arrGo('kakao',()=>openRoom(i)));
+    if(!inRoom&&!a.me)arrBanner('kakao',name||'KakaoTalk',(r.group&&a.who?a.who+'：':'')+(a.text||''),arrGo('kakao',()=>openRoom(i)));
   }else if(act==='msg'&&app==='msgs'){
     const T=P.msgs.threads;let i=T.findIndex(t=>t.name===name);
     if(i<0){T.push({name:name||'新訊息',open:true,msgs:[]});i=T.length-1}
