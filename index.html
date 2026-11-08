@@ -827,7 +827,8 @@ const ghH=()=>({'Authorization':'token '+tok(),'Accept':'application/vnd.github+
 if(STANDALONE)document.body.classList.add('standalone','play');
 if(GH){
   let d=null;
-  try{if(tok()){const r=await fetch(ghApi('data.json'),{headers:{'Authorization':'token '+tok(),'Accept':'application/vnd.github.raw'},cache:'no-store'});if(r.ok)d=await r.json()}}catch(e){}
+  try{if(tok()){const r=await fetch(ghApi('data.json'),{headers:{'Authorization':'token '+tok(),'Accept':'application/vnd.github.raw'},cache:'no-store'});if(r.ok)d=await r.json();
+    const m=await fetch(ghApi('data.json'),{headers:{'Authorization':'token '+tok(),'Accept':'application/vnd.github+json'},cache:'no-store'});if(m.ok)window.__ghSha=(await m.json()).sha}}catch(e){}
   if(!d){try{const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'});if(r.ok)d=await r.json()}catch(e){}}
   if(d)P=Object.assign(EMB,d);
 }else{try{const sv=localStorage.getItem(KEY);if(sv)P=Object.assign(EMB,JSON.parse(sv))}catch(e){}}
@@ -1928,8 +1929,11 @@ if(!STANDALONE)(function(){
       const json=JSON.stringify(P,(k,v)=>{v=SAVE_RP(k,v);return(typeof v==='string'&&map.has(v))?map.get(v):v});
       let sha;const g=await fetch(ghApi('data.json'),{headers:ghH(),cache:'no-store'});
       if(g.ok)sha=(await g.json()).sha;else if(g.status!==404){setSt('儲存失敗：'+(g.status===401?'權杖無效':'讀不到檔案'),1);return}
+      /* 防止蓋掉別處（例如 Claude）剛更新的資料：雲端版本跟這個頁面載入時不同，就停止自動存檔 */
+      if(window.__ghSha&&sha&&sha!==window.__ghSha){window.__ghStale=true;setSt('⚠️ 雲端資料已在別處更新，這次沒有存檔。請重新整理頁面後再編輯',1);return}
       const r=await fetch(ghApi('data.json'),{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},ghH()),body:JSON.stringify({message:'update phone data',content:u2b(json),sha})});
       if(!r.ok){setSt(r.status===409?'儲存失敗：有衝突，請重新整理再試':'儲存失敗，稍後會再試',1);return}
+      try{const rj=await r.json();if(rj&&rj.content&&rj.content.sha)window.__ghSha=rj.content.sha}catch(e){}
       dirty=false;setSt('已儲存到 GitHub（網站約 1 分鐘後更新）');
     }catch(e){setSt('儲存失敗：連不上 GitHub',1)}
     finally{saving=false;if(again){again=false;ghSaveNow()}}
